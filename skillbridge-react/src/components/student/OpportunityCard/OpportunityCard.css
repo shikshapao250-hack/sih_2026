@@ -1,0 +1,107 @@
+
+.opportunity-card {
+  background: #ffffff;
+  border: 1px solid #e6e8f0;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 270px;
+  padding: 1.25rem;
+  position: relative;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.opportunity-card:hover {
+  border-color: rgba(91, 92, 226, 0.3);
+  box-shadow: 0 16px 35px rgba(23, 32, 51, 0.08);
+  transform: translateY(-5px);
+}
+
+.opportunity-card__topline {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.opportunity-card__company-mark {
+  align-items: center;
+  background: linear-gradient(135deg, #5b5ce2, #8b84ef);
+  border-radius: 11px;
+  color: white;
+  display: flex;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+.opportunity-card__match {
+  background: #e8f7ee;
+  border: 1px solid #d4f0df;
+  border-radius: 999px;
+  color: #16805b;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.35rem 0.6rem;
+}
+
+.opportunity-card__location {
+  color: #7a8799;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  margin: 1.1rem 0 0.4rem;
+  text-transform: uppercase;
+}
+
+.opportunity-card h3 {
+  font-family: "Manrope", sans-serif;
+  font-size: 1.02rem;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.opportunity-card__company {
+  color: #697386;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin: 0.25rem 0 0;
+}
+
+.opportunity-card__skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1rem;
+}
+
+.opportunity-card__skills span {
+  background: #f4f5f9;
+  border: 1px solid #e9ebf1;
+  border-radius: 6px;
+  color: #596579;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.3rem 0.5rem;
+}
+
+.opportunity-card__footer {
+  align-items: center;
+  border-top: 1px solid #edf0f5;
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 0.9rem;
+}
+
+.opportunity-card__footer > span {
+  color: #8993a4;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+

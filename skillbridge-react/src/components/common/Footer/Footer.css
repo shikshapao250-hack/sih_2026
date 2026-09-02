@@ -1,0 +1,31 @@
+.footer {
+  align-items: center;
+  border-top: 1px solid #e8eaf2;
+  color: #667085;
+  display: flex;
+  font-size: 0.82rem;
+  justify-content: space-between;
+  margin-top: 5rem;
+  padding: 1.5rem clamp(1.25rem, 5vw, 5rem);
+}
+
+.footer p {
+  margin: 0;
+}
+
+.footer__links {
+  display: flex;
+  gap: 1rem;
+}
+
+.footer__links a {
+  text-decoration: none;
+}
+
+@media (max-width: 540px) {
+  .footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}

@@ -1,0 +1,55 @@
+.faculty-opportunity-card {
+  background: #ffffff;
+  border: 1px solid #e6e8f0;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+}
+
+.faculty-opportunity-card__type {
+  color: #4f46e5;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  margin: 0 0 0.75rem;
+}
+
+.faculty-opportunity-card h3 {
+  font-size: 1rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.faculty-opportunity-card__organisation {
+  color: #667085;
+  font-size: 0.83rem;
+  margin: 0.3rem 0 0;
+}
+
+.faculty-opportunity-card__duration {
+  color: #52627a;
+  font-size: 0.73rem;
+  font-weight: 700;
+  margin: 1rem 0 0;
+}
+
+.faculty-opportunity-card__skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.85rem 0 1.2rem;
+}
+
+.faculty-opportunity-card__skills span {
+  background: #f3f4f8;
+  border-radius: 4px;
+  color: #596579;
+  font-size: 0.68rem;
+  padding: 0.27rem 0.46rem;
+}
+
+.faculty-opportunity-card .button {
+  margin-top: auto;
+  width: 100%;
+}

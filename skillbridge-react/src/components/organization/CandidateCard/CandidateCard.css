@@ -1,0 +1,254 @@
+.candidate-card {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #e7e9f2;
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: 0 8px 28px rgba(31, 41, 55, 0.05);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.candidate-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #4f46e5, #8b84ef);
+}
+
+.candidate-card:hover {
+  transform: translateY(-4px);
+  border-color: #d9d6ff;
+  box-shadow: 0 18px 42px rgba(31, 41, 55, 0.1);
+}
+
+/* PROFILE */
+
+.candidate-card__profile {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.candidate-card__avatar {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #5b54d6, #8178ef);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 850;
+  box-shadow: 0 7px 18px rgba(91, 84, 214, 0.2);
+}
+
+.candidate-card h3 {
+  margin: 0;
+  color: #171d2c;
+  font-size: 0.94rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.candidate-card p {
+  margin: 0.2rem 0 0;
+  color: #7a8495;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.candidate-card__match {
+  padding: 0.35rem 0.55rem;
+  border: 1px solid #d5f0e1;
+  border-radius: 999px;
+  background: #ecfaf2;
+  color: #16805b;
+  font-size: 0.68rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+/* SKILLS */
+
+.candidate-card__skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1.15rem 0;
+}
+
+.candidate-card__skill {
+  padding: 0.32rem 0.5rem;
+  border: 1px solid #e8eaf1;
+  border-radius: 6px;
+  background: #f7f8fb;
+  color: #657084;
+  font-size: 0.67rem;
+  font-weight: 650;
+}
+
+.candidate-card__skill--matched {
+  border-color: #d3efdf;
+  background: #eefaf3;
+  color: #16805b;
+}
+
+/* INTELLIGENCE PANEL */
+
+.candidate-card__intelligence {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #e8e9f3;
+  border-radius: 13px;
+  background:
+    radial-gradient(
+      circle at 100% 0,
+      rgba(99, 91, 219, 0.08),
+      transparent 45%
+    ),
+    #fafaff;
+}
+
+.candidate-card__intelligence-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.candidate-card__intelligence-header span {
+  color: #7a8495;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+}
+
+.candidate-card__intelligence-header strong {
+  color: #4f46e5;
+  font-size: 0.9rem;
+}
+
+/* MATCH BAR */
+
+.candidate-card__progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9eaf2;
+}
+
+.candidate-card__progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4f46e5, #8b84ef);
+  transition: width 0.7s ease;
+}
+
+/* MATCHED */
+
+.candidate-card__matched,
+.candidate-card__gaps {
+  margin-top: 0.85rem;
+}
+
+.candidate-card__matched-label,
+.candidate-card__gap-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: #697386;
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.candidate-card__matched > div,
+.candidate-card__gaps > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.candidate-card__matched-skill {
+  padding: 0.3rem 0.45rem;
+  border-radius: 5px;
+  background: #eaf8f0;
+  color: #16805b;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.candidate-card__gap {
+  padding: 0.3rem 0.45rem;
+  border-radius: 5px;
+  background: #fff4e7;
+  color: #b56811;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.candidate-card__perfect {
+  margin-top: 0.8rem !important;
+  color: #16805b !important;
+  font-size: 0.7rem !important;
+  font-weight: 750;
+}
+
+/* RECOMMENDATION */
+
+.candidate-card__recommendation {
+  margin-top: 0.9rem;
+  padding: 0.75rem;
+  border-left: 3px solid #635bdb;
+  border-radius: 6px;
+  background: #f3f2ff;
+}
+
+.candidate-card__recommendation span {
+  color: #635bdb;
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.candidate-card__recommendation p {
+  margin-top: 0.3rem;
+  color: #555f73;
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+/* BUTTON */
+
+.candidate-card__button {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 600px) {
+  .candidate-card {
+    padding: 1rem;
+  }
+
+  .candidate-card__profile {
+    grid-template-columns: auto 1fr;
+  }
+
+  .candidate-card__match {
+    grid-column: 2;
+    justify-self: start;
+    margin-top: -0.35rem;
+  }
+}
