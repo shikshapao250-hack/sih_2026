@@ -3,9 +3,51 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
 } from "firebase/auth";
 
-import { auth } from "../../config/firebase";
+import { auth } from "../config/firebase";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+async function syncUserWithBackend(user, profile) {
+  const body = {
+    uid: user.uid,
+    name: String(profile.name || user.displayName || user.email || "").trim(),
+    email: user.email,
+    role: profile.role,
+  };
+
+  const response = await fetch(`${API_URL}/auth/user`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  let responseBody;
+  try {
+    responseBody = await response.json();
+  } catch {
+    responseBody = { error: "The server returned an invalid response." };
+  }
+
+  if (!response.ok) {
+    throw new Error(responseBody.error || "Unable to sync the user profile.");
+  }
+
+  const responseMatchesRequest =
+    responseBody &&
+    Object.keys(body).every((key) => responseBody[key] === body[key]) &&
+    Object.keys(responseBody).length === Object.keys(body).length;
+
+  if (!responseMatchesRequest) {
+    throw new Error("The server returned an unexpected user profile.");
+  }
+
+  return responseBody;
+}
 
 export async function registerWithEmailAndPassword(email, password) {
   const trimmedEmail = String(email || "").trim();
@@ -43,6 +85,33 @@ export async function loginWithEmailAndPassword(email, password) {
   );
 
   return userCredential.user;
+}
+
+export async function loginAndSyncUser(email, password, role) {
+  const user = await loginWithEmailAndPassword(email, password);
+  const savedUser = localStorage.getItem("skillbridge_user");
+  let profile = {};
+
+  if (savedUser) {
+    try {
+      profile = JSON.parse(savedUser) || {};
+    } catch {
+      profile = {};
+    }
+  }
+
+  return syncUserWithBackend(user, {
+    name: profile.email?.toLowerCase() === user.email?.toLowerCase()
+      ? profile.name
+      : user.displayName,
+    role,
+  });
+}
+
+export async function registerAndSyncUser(email, password, name, role) {
+  const user = await registerWithEmailAndPassword(email, password);
+  await updateProfile(user, { displayName: String(name || "").trim() });
+  return syncUserWithBackend(user, { name, role });
 }
 
 export async function logoutUser() {

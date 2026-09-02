@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { registerAndSyncUser } from "../../../services/authService";
 
 const roleConfig = {
   student: {
@@ -72,7 +73,7 @@ function SignUp({ onLogin, onNavigate }) {
   };
 
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
 
     event.preventDefault();
 
@@ -120,44 +121,19 @@ function SignUp({ onLogin, onNavigate }) {
 
     setLoading(true);
 
-    // Temporary frontend authentication.
-    // Firebase will replace this later.
-    const userData = {
-      id: Date.now(),
-      name: form.name,
-      email: form.email,
-      role,
-
-      ...(role === "student" && {
-        course: form.course,
-        graduationYear:
-          form.graduationYear,
-        location: form.location,
-        skills: [],
-        projects: [],
-        education: [],
-      }),
-
-      ...(role === "organization" && {
-        organizationName:
-          form.organizationName,
-        location: form.location,
-      }),
-
-      ...(role === "college" && {
-        collegeName:
-          form.collegeName,
-        location: form.location,
-      }),
-    };
-
-    setTimeout(() => {
-
+    try {
+      const userData = await registerAndSyncUser(
+        form.email,
+        form.password,
+        form.name,
+        role
+      );
       setLoading(false);
-
       onLogin(userData);
-
-    }, 600);
+    } catch (submitError) {
+      setLoading(false);
+      setError(submitError.message || "Unable to create your account.");
+    }
   };
 
 

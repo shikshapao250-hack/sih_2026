@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { loginAndSyncUser } from "../../../services/authService";
 
 const roles = [
   {
@@ -44,7 +45,7 @@ function Login({ onLogin, onNavigate }) {
     setError("");
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     setError("");
@@ -58,59 +59,14 @@ function Login({ onLogin, onNavigate }) {
 
     setLoading(true);
 
-    /*
-      TEMPORARY LOGIN
-
-      Firebase authentication will replace
-      this section later.
-    */
-
-    const savedUser = localStorage.getItem(
-      "skillbridge_user"
-    );
-
-    let userData = null;
-
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser);
-
-        if (
-          parsedUser.email?.toLowerCase() ===
-            email.trim().toLowerCase() &&
-          parsedUser.role === role
-        ) {
-          userData = parsedUser;
-        }
-      } catch {
-        userData = null;
-      }
-    }
-
-    /*
-      For development, allow login even when
-      a Firebase backend isn't connected yet.
-    */
-
-    if (!userData) {
-      userData = {
-        id: Date.now(),
-        name:
-          role === "student"
-            ? "Student User"
-            : role === "organization"
-              ? "Organization User"
-              : "College User",
-
-        email: email.trim(),
-        role,
-      };
-    }
-
-    setTimeout(() => {
+    try {
+      const userData = await loginAndSyncUser(email, password, role);
       setLoading(false);
       onLogin(userData);
-    }, 600);
+    } catch (submitError) {
+      setLoading(false);
+      setError(submitError.message || "Unable to log in.");
+    }
   };
 
   const selectedRole =

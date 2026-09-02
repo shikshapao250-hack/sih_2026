@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
+import { logoutUser, watchAuthState } from "./services/authService";
 
 /* ==========================================
    COMMON
@@ -124,6 +125,29 @@ function App() {
 
   });
 
+  useEffect(() => {
+    return watchAuthState((firebaseUser) => {
+      if (!firebaseUser) {
+        setUser(null);
+        return;
+      }
+
+      const savedUser = localStorage.getItem("skillbridge_user");
+      if (!savedUser) {
+        return;
+      }
+
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        if (parsedUser.uid === firebaseUser.uid) {
+          setUser(parsedUser);
+        }
+      } catch {
+        localStorage.removeItem("skillbridge_user");
+      }
+    });
+  }, []);
+
 
   /* ==========================================
      SAVE USER
@@ -215,14 +239,8 @@ function App() {
      LOGOUT
   ========================================== */
 
-  const handleLogout = () => {
-
-    setUser(null);
-
-    localStorage.removeItem(
-      "skillbridge_user"
-    );
-
+  const handleLogout = async () => {
+    await logoutUser();
     navigate("home");
 
   };
