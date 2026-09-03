@@ -10,21 +10,61 @@ import { auth } from "../config/firebase";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
+const ROLE_TO_BACKEND_ROLE = {
+  student: "STUDENT",
+  college: "COLLEGE",
+  organization: "ORGANISATION",
+};
+
+const BACKEND_ROLE_TO_ROLE = Object.fromEntries(
+  Object.entries(ROLE_TO_BACKEND_ROLE).map(([role, backendRole]) => [
+    backendRole,
+    role,
+  ])
+);
+
+function getBackendRole(role) {
+  const backendRole = ROLE_TO_BACKEND_ROLE[role];
+
+  if (!backendRole) {
+    throw new Error("Please select a valid account role.");
+  }
+
+  return backendRole;
+}
+
 async function syncUserWithBackend(user, profile) {
   const body = {
     uid: user.uid,
     name: String(profile.name || user.displayName || user.email || "").trim(),
     email: user.email,
-    role: profile.role,
+    role: getBackendRole(profile.role),
   };
 
-  const response = await fetch(`${API_URL}/auth/user`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
+  console.info("[auth] Syncing user with backend", {
+    endpoint: `${API_URL}/auth/user`,
+    uid: body.uid,
+    email: body.email,
+    role: body.role,
   });
+
+  let response;
+  try {
+    response = await fetch(`${API_URL}/auth/user`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (error) {
+    console.error("[auth] Backend sync request failed", {
+      endpoint: `${API_URL}/auth/user`,
+      uid: body.uid,
+      message: error.message,
+    });
+    throw error;
+  }
 
   let responseBody;
   try {
@@ -33,20 +73,77 @@ async function syncUserWithBackend(user, profile) {
     responseBody = { error: "The server returned an invalid response." };
   }
 
+  console.info("[auth] Backend sync response", {
+    status: response.status,
+    uid: body.uid,
+    responseBody,
+  });
+
   if (!response.ok) {
     throw new Error(responseBody.error || "Unable to sync the user profile.");
   }
 
   const responseMatchesRequest =
     responseBody &&
-    Object.keys(body).every((key) => responseBody[key] === body[key]) &&
-    Object.keys(responseBody).length === Object.keys(body).length;
+    Object.keys(body).every((key) => responseBody[key] === body[key]);
 
   if (!responseMatchesRequest) {
+    console.error("[auth] Backend returned an unexpected user profile", {
+      uid: body.uid,
+      expected: body,
+      actual: responseBody,
+      mismatchedFields: Object.keys(body).filter(
+        (key) => responseBody?.[key] !== body[key]
+      ),
+    });
     throw new Error("The server returned an unexpected user profile.");
   }
 
-  return responseBody;
+  return {
+    ...responseBody,
+    role: BACKEND_ROLE_TO_ROLE[responseBody.role],
+  };
+}
+
+async function getUserRole(uid) {
+  const endpoint = `${API_URL}/auth/user/${uid}`;
+  console.info("[auth] Checking existing user role", { endpoint, uid });
+
+  let response;
+  try {
+    response = await fetch(endpoint);
+  } catch (error) {
+    console.error("[auth] Existing role request failed", {
+      endpoint,
+      uid,
+      message: error.message,
+    });
+    throw error;
+  }
+
+  if (response.status === 404) {
+    console.info("[auth] No existing role found", { uid, status: 404 });
+    return null;
+  }
+
+  let responseBody;
+  try {
+    responseBody = await response.json();
+  } catch {
+    responseBody = { error: "The server returned an invalid response." };
+  }
+
+  console.info("[auth] Existing role response", {
+    status: response.status,
+    uid,
+    responseBody,
+  });
+
+  if (!response.ok) {
+    throw new Error(responseBody.error || "Unable to check the user role.");
+  }
+
+  return BACKEND_ROLE_TO_ROLE[responseBody.role];
 }
 
 export async function registerWithEmailAndPassword(email, password) {
@@ -110,6 +207,18 @@ export async function loginAndSyncUser(email, password, role) {
 
 export async function registerAndSyncUser(email, password, name, role) {
   const user = await registerWithEmailAndPassword(email, password);
+  console.info("[auth] Firebase account created", { uid: user.uid, email: user.email });
+
+  const existingRole = await getUserRole(user.uid);
+  if (existingRole) {
+    console.warn("[auth] Signup blocked because a role already exists", {
+      uid: user.uid,
+      existingRole,
+      requestedRole: role,
+    });
+    throw new Error("A role is already provided on this email.");
+  }
+
   await updateProfile(user, { displayName: String(name || "").trim() });
   return syncUserWithBackend(user, { name, role });
 }
