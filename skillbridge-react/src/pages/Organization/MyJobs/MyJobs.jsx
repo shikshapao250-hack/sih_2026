@@ -1,41 +1,76 @@
 import { useEffect, useState } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 function MyJobs({ user, onNavigate }) {
   const [jobs, setJobs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const storedJobs = JSON.parse(
-      localStorage.getItem("skillbridge_jobs") || "[]"
-    );
+    let isActive = true;
 
-    const organizationJobs = storedJobs.filter(
-      (job) =>
-        job.organization ===
-        (user?.name || "Organization")
-    );
+    const loadJobs = async () => {
+      if (!user?.uid) {
+        setJobs([]);
+        setIsLoading(false);
+        return;
+      }
 
-    setJobs(organizationJobs);
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const response = await fetch(
+          `${API_URL}/jobs?uid=${encodeURIComponent(user.uid)}`
+        );
+        const responseBody = await response.json();
+
+        if (!response.ok) {
+          throw new Error(responseBody.error || "Unable to load your jobs.");
+        }
+
+        if (!Array.isArray(responseBody)) {
+          throw new Error("The server returned an invalid jobs list.");
+        }
+
+        if (isActive) {
+          setJobs(responseBody.map(mapJob));
+        }
+      } catch (requestError) {
+        if (isActive) {
+          setError(requestError.message || "Unable to load your jobs.");
+          setJobs([]);
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadJobs();
+
+    return () => {
+      isActive = false;
+    };
   }, [user]);
 
-  const deleteJob = (jobId) => {
-    const allJobs = JSON.parse(
-      localStorage.getItem("skillbridge_jobs") || "[]"
-    );
+  const deleteJob = async (jobId) => {
+    try {
+      const response = await fetch(`${API_URL}/jobs/${jobId}`, {
+        method: "DELETE",
+      });
+      const responseBody = await response.json();
 
-    const updatedJobs = allJobs.filter(
-      (job) => job.id !== jobId
-    );
+      if (!response.ok) {
+        throw new Error(responseBody.error || "Unable to delete job.");
+      }
 
-    localStorage.setItem(
-      "skillbridge_jobs",
-      JSON.stringify(updatedJobs)
-    );
-
-    setJobs((previous) =>
-      previous.filter(
-        (job) => job.id !== jobId
-      )
-    );
+      setJobs((previous) => previous.filter((job) => job.id !== jobId));
+    } catch (requestError) {
+      setError(requestError.message || "Unable to delete job.");
+    }
   };
 
   return (
@@ -132,7 +167,19 @@ function MyJobs({ user, onNavigate }) {
 
         {/* JOB LIST */}
 
-        {jobs.length > 0 ? (
+        {isLoading ? (
+
+          <section className="mt-7 rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+            <p className="text-sm font-bold text-slate-500">Loading your opportunities...</p>
+          </section>
+
+        ) : error ? (
+
+          <section className="mt-7 rounded-3xl border border-red-100 bg-red-50 p-10 text-center">
+            <p className="text-sm font-bold text-red-600">{error}</p>
+          </section>
+
+        ) : jobs.length > 0 ? (
 
           <section className="mt-7 space-y-4">
 
@@ -318,6 +365,22 @@ function MyJobs({ user, onNavigate }) {
 
     </div>
   );
+}
+
+
+function mapJob(job) {
+  return {
+    ...job,
+    id: job._id || job.id,
+    type: job.type || job.opportunityType,
+    mode: job.mode || job.workMode,
+    skills: Array.isArray(job.skills)
+      ? job.skills
+      : Array.isArray(job.skillsRequired)
+        ? job.skillsRequired
+        : [],
+    deadline: job.deadline || job.applicationDeadline,
+  };
 }
 
 

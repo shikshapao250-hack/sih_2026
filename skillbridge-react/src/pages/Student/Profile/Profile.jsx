@@ -1,20 +1,80 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 function Profile({ user, onNavigate }) {
   const [editing, setEditing] = useState(false);
+  const [profile, setProfile] = useState({});
+  const [skills, setSkills] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [education, setEducation] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [profile, setProfile] = useState({
-    name: user?.name || "Student Name",
-    headline:
-      "Computer Science Student | Developer | Problem Solver",
-    location: "New Delhi, India",
-    college: "SkillBridge University",
-    degree: "B.Tech Computer Science",
-    year: "3rd Year",
-    about:
-      "Passionate student interested in technology, software development and building real-world projects.",
-    email: user?.email || "student@example.com",
-  });
+  useEffect(() => {
+    let isActive = true;
+
+    const loadProfile = async () => {
+      if (!user?.uid) {
+        setIsLoading(false);
+        setError("Unable to load profile without a signed-in user.");
+        return;
+      }
+
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const [profileResponse, skillsResponse, projectsResponse, educationResponse] = await Promise.all([
+          fetch(`${API_URL}/auth/user/${encodeURIComponent(user.uid)}`),
+          fetch(`${API_URL}/skills?uid=${encodeURIComponent(user.uid)}`),
+          fetch(`${API_URL}/projects?uid=${encodeURIComponent(user.uid)}`),
+          fetch(`${API_URL}/education?uid=${encodeURIComponent(user.uid)}`),
+        ]);
+
+        const responses = await Promise.all(
+          [profileResponse, skillsResponse, projectsResponse, educationResponse].map(
+            async (response) => ({
+              ok: response.ok,
+              body: await response.json(),
+            })
+          )
+        );
+
+        const failedResponse = responses.find((response) => !response.ok);
+        if (failedResponse) {
+          throw new Error(failedResponse.body.error || "Unable to load profile data.");
+        }
+
+        const [profileBody, skillsBody, projectsBody, educationBody] = responses.map(
+          (response) => response.body
+        );
+
+        if (!isActive) {
+          return;
+        }
+
+        setProfile(profileBody);
+        setSkills(Array.isArray(skillsBody) ? skillsBody : []);
+        setProjects(Array.isArray(projectsBody) ? projectsBody : []);
+        setEducation(Array.isArray(educationBody) ? educationBody : []);
+      } catch (requestError) {
+        if (isActive) {
+          setError(requestError.message || "Unable to load profile data.");
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      isActive = false;
+    };
+  }, [user?.uid]);
 
   const updateProfile = (field, value) => {
     setProfile((current) => ({
@@ -22,6 +82,23 @@ function Profile({ user, onNavigate }) {
       [field]: value,
     }));
   };
+
+  const currentEducation = education[0];
+  const displayName = profile.name || user?.name || "";
+  const connectionCount = profile.connections ?? 0;
+  const profileCompletion = Math.round(
+    ([
+      profile.name,
+      profile.email,
+      profile.course,
+      profile.graduationYear,
+      profile.college,
+      profile.location,
+      skills.length > 0,
+      projects.length > 0,
+      education.length > 0,
+    ].filter(Boolean).length / 8) * 100
+  );
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -57,6 +134,18 @@ function Profile({ user, onNavigate }) {
 
       <main className="mx-auto max-w-5xl px-4 py-7 sm:px-6 lg:px-8 lg:py-10">
 
+        {isLoading && (
+          <div className="mb-6 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-500">
+            Loading profile...
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold text-red-600">
+            {error}
+          </div>
+        )}
+
         {/* PROFILE HERO */}
 
         <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -74,7 +163,7 @@ function Profile({ user, onNavigate }) {
               {/* AVATAR */}
 
               <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-3xl border-4 border-white bg-gradient-to-br from-indigo-500 to-violet-500 text-3xl font-black text-white shadow-lg sm:h-32 sm:w-32 sm:text-4xl">
-                {profile.name.charAt(0).toUpperCase()}
+                {displayName.charAt(0).toUpperCase()}
               </div>
 
 
@@ -98,17 +187,17 @@ function Profile({ user, onNavigate }) {
                 ) : (
 
                   <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
-                    {profile.name}
+                    {displayName}
                   </h1>
 
                 )}
 
                 <p className="mt-1 text-sm font-semibold text-indigo-600">
-                  {profile.headline}
+                  {profile.course || ""}
                 </p>
 
                 <p className="mt-2 text-xs font-semibold text-slate-400">
-                  📍 {profile.location}
+                  {profile.location || ""}
                 </p>
 
               </div>
@@ -121,17 +210,17 @@ function Profile({ user, onNavigate }) {
             <div className="mt-7 grid grid-cols-3 divide-x divide-slate-100 rounded-2xl bg-slate-50 py-4">
 
               <QuickStat
-                value="8"
+                value={skills.length}
                 label="Skills"
               />
 
               <QuickStat
-                value="5"
+                value={projects.length}
                 label="Projects"
               />
 
               <QuickStat
-                value="12"
+                value={connectionCount}
                 label="Connections"
               />
 
@@ -185,7 +274,7 @@ function Profile({ user, onNavigate }) {
             ) : (
 
               <p className="mt-5 text-sm leading-7 text-slate-600">
-                {profile.about}
+                {profile.about || ""}
               </p>
 
             )}
@@ -217,15 +306,15 @@ function Profile({ user, onNavigate }) {
                 <div>
 
                   <p className="text-sm font-black text-slate-800">
-                    {profile.college}
+                    {currentEducation?.institution || profile.college || ""}
                   </p>
 
                   <p className="mt-1 text-xs font-semibold text-indigo-600">
-                    {profile.degree}
+                    {currentEducation?.degree || profile.course || ""}
                   </p>
 
                   <p className="mt-1 text-xs text-slate-400">
-                    {profile.year}
+                    {currentEducation?.year || profile.graduationYear || ""}
                   </p>
 
                 </div>
@@ -254,13 +343,13 @@ function Profile({ user, onNavigate }) {
               <InfoItem
                 icon="✉"
                 label="Email"
-                value={profile.email}
+                value={profile.email || user?.email || ""}
               />
 
               <InfoItem
                 icon="📍"
                 label="Location"
-                value={profile.location}
+                value={profile.location || ""}
               />
 
             </div>
@@ -281,7 +370,7 @@ function Profile({ user, onNavigate }) {
                 </p>
 
                 <h2 className="mt-2 text-xl font-black">
-                  Your profile is 72% complete
+                  Your profile is {profileCompletion}% complete
                 </h2>
 
                 <p className="mt-2 max-w-xl text-xs leading-5 text-indigo-100">
@@ -292,7 +381,7 @@ function Profile({ user, onNavigate }) {
               </div>
 
               <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 border-white/20 text-xl font-black">
-                72%
+                {profileCompletion}%
               </div>
 
             </div>

@@ -14,7 +14,7 @@ const people = [
   },
   {
     id: 2,
-    name: "Priya Sharma",
+    name: "Kanika",
     role: "Data Science Student",
     type: "Student",
     location: "Delhi",

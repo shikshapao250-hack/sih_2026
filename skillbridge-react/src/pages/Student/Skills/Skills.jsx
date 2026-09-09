@@ -1,37 +1,5 @@
-import { useMemo, useState } from "react";
-
-const initialSkills = [
-  {
-    id: 1,
-    name: "React",
-    category: "Development",
-    level: "Intermediate",
-  },
-  {
-    id: 2,
-    name: "JavaScript",
-    category: "Development",
-    level: "Intermediate",
-  },
-  {
-    id: 3,
-    name: "Python",
-    category: "Programming",
-    level: "Advanced",
-  },
-  {
-    id: 4,
-    name: "SQL",
-    category: "Database",
-    level: "Intermediate",
-  },
-  {
-    id: 5,
-    name: "Git",
-    category: "Tools",
-    level: "Intermediate",
-  },
-];
+import { useMemo, useState, useEffect } from "react";
+import { watchAuthState } from "../../../services/authService";
 
 const skillSuggestions = [
   "Node.js",
@@ -48,85 +16,204 @@ const skillSuggestions = [
   "Docker",
 ];
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 function Skills({ onNavigate }) {
-  const [skills, setSkills] =
-    useState(initialSkills);
+  const [skills, setSkills] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [search, setSearch] =
     useState("");
 
-  const [newSkill, setNewSkill] =
+  const [uid, setUid] =
     useState("");
 
-  const [category, setCategory] =
+  const [skillTitle, setSkillTitle] =
+    useState("");
+
+  const [skillDescription, setSkillDescription] =
+    useState("");
+
+  const [skillCategory, setSkillCategory] =
     useState("Development");
 
-  const [level, setLevel] =
+  const [skillLevel, setSkillLevel] =
     useState("Intermediate");
+
+  useEffect(() => {
+    const unsubscribe = watchAuthState((user) => {
+      setUid(user?.uid || "");
+    });
+
+    return () => unsubscribe?.();
+  }, []);
+
+  // Fetch skills from backend when uid is set
+  useEffect(() => {
+    if (!uid) {
+      setSkills([]);
+      return;
+    }
+
+    const fetchSkills = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const response = await fetch(
+          `${API_URL}/skills?uid=${encodeURIComponent(uid)}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch skills");
+        }
+        const data = await response.json();
+        setSkills(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("[skills] Fetch failed", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSkills();
+  }, [uid]);
 
   const filteredSkills = useMemo(() => {
     return skills.filter((skill) =>
-      skill.name
+      skill.skillTitle
         .toLowerCase()
         .includes(search.toLowerCase())
     );
   }, [skills, search]);
 
-  const addSkill = () => {
-    const name = newSkill.trim();
+  const addSkill = async () => {
+    const title = skillTitle.trim();
 
-    if (!name) return;
-
-    const alreadyExists = skills.some(
-      (skill) =>
-        skill.name.toLowerCase() ===
-        name.toLowerCase()
-    );
-
-    if (alreadyExists) {
-      setNewSkill("");
+    if (!title) {
+      setError("Please enter a skill title.");
       return;
     }
 
-    setSkills((current) => [
-      ...current,
-      {
-        id: Date.now(),
-        name,
-        category,
-        level,
-      },
-    ]);
+    if (!uid) {
+      setError("Please sign in before adding skills.");
+      return;
+    }
 
-    setNewSkill("");
+    const alreadyExists = skills.some(
+      (skill) =>
+        skill.skillTitle.toLowerCase() ===
+        title.toLowerCase()
+    );
+
+    if (alreadyExists) {
+      setSkillTitle("");
+      setError("This skill is already in your profile.");
+      return;
+    }
+
+    try {
+      setError("");
+      const response = await fetch(
+        `${API_URL}/skills`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            uid,
+            skillTitle: title,
+            skillDescription,
+            skillCategory,
+            skillLevel,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to add skill");
+      }
+
+      const newSkill = await response.json();
+      setSkills((current) => [newSkill, ...current]);
+      setSkillTitle("");
+      setSkillDescription("");
+    } catch (err) {
+      console.error("[skills] Add failed", err);
+      setError(err.message);
+    }
   };
 
-  const addSuggestion = (name) => {
+  const addSuggestion = async (name) => {
     const exists = skills.some(
       (skill) =>
-        skill.name.toLowerCase() ===
+        skill.skillTitle.toLowerCase() ===
         name.toLowerCase()
     );
 
     if (exists) return;
 
-    setSkills((current) => [
-      ...current,
-      {
-        id: Date.now(),
-        name,
-        category: "Development",
-        level: "Beginner",
-      },
-    ]);
+    if (!uid) {
+      setError("Please sign in before adding skills.");
+      return;
+    }
+
+    try {
+      setError("");
+      const response = await fetch(
+        `${API_URL}/skills`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            uid,
+            skillTitle: name,
+            skillDescription: "",
+            skillCategory: "Development",
+            skillLevel: "Beginner",
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to add skill");
+      }
+
+      const newSkill = await response.json();
+      setSkills((current) => [newSkill, ...current]);
+    } catch (err) {
+      console.error("[skills] Add suggestion failed", err);
+      setError(err.message);
+    }
   };
 
-  const removeSkill = (id) => {
-    setSkills((current) =>
-      current.filter(
-        (skill) => skill.id !== id
-      )
-    );
+  const removeSkill = async (id) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/skills/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete skill");
+      }
+
+      setSkills((current) =>
+        current.filter(
+          (skill) => skill._id !== id
+        )
+      );
+    } catch (err) {
+      console.error("[skills] Delete failed", err);
+      setError(err.message);
+    }
   };
 
   return (
@@ -199,77 +286,107 @@ function Skills({ onNavigate }) {
           </div>
 
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto]">
+          <div className="mt-5 space-y-4">
 
-            <input
-              value={newSkill}
-              onChange={(event) =>
-                setNewSkill(
-                  event.target.value
-                )
-              }
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  addSkill();
+            <div>
+              <label className="text-xs font-bold text-slate-600">Skill Title</label>
+              <input
+                value={skillTitle}
+                onChange={(event) =>
+                  setSkillTitle(
+                    event.target.value
+                  )
                 }
-              }}
-              placeholder="e.g. Machine Learning"
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50"
-            />
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    addSkill();
+                  }
+                }}
+                placeholder="e.g. Machine Learning"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+              />
+            </div>
 
-            <select
-              value={category}
-              onChange={(event) =>
-                setCategory(
-                  event.target.value
-                )
-              }
-              className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs font-bold text-slate-600 outline-none focus:border-indigo-500"
-            >
-              <option>
-                Development
-              </option>
-              <option>
-                Programming
-              </option>
-              <option>
-                Database
-              </option>
-              <option>
-                Design
-              </option>
-              <option>
-                Data
-              </option>
-              <option>
-                Tools
-              </option>
-              <option>
-                Business
-              </option>
-            </select>
+            <div>
+              <label className="text-xs font-bold text-slate-600">Skill Description</label>
+              <textarea
+                value={skillDescription}
+                onChange={(event) =>
+                  setSkillDescription(
+                    event.target.value
+                  )
+                }
+                placeholder="Describe your skill and experience with it..."
+                rows="3"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+              />
+            </div>
 
-            <select
-              value={level}
-              onChange={(event) =>
-                setLevel(
-                  event.target.value
-                )
-              }
-              className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs font-bold text-slate-600 outline-none focus:border-indigo-500"
-            >
-              <option>Beginner</option>
-              <option>Intermediate</option>
-              <option>Advanced</option>
-            </select>
+            <div className="grid gap-3 sm:grid-cols-3">
 
-            <button
-              type="button"
-              onClick={addSkill}
-              className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-black text-white transition hover:bg-indigo-700"
-            >
-              + Add
-            </button>
+              <div>
+                <label className="text-xs font-bold text-slate-600">Category</label>
+                <select
+                  value={skillCategory}
+                  onChange={(event) =>
+                    setSkillCategory(
+                      event.target.value
+                    )
+                  }
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs font-bold text-slate-600 outline-none focus:border-indigo-500"
+                >
+                  <option>
+                    Development
+                  </option>
+                  <option>
+                    Programming
+                  </option>
+                  <option>
+                    Database
+                  </option>
+                  <option>
+                    Design
+                  </option>
+                  <option>
+                    Data
+                  </option>
+                  <option>
+                    Tools
+                  </option>
+                  <option>
+                    Business
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-600">Level</label>
+                <select
+                  value={skillLevel}
+                  onChange={(event) =>
+                    setSkillLevel(
+                      event.target.value
+                    )
+                  }
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs font-bold text-slate-600 outline-none focus:border-indigo-500"
+                >
+                  <option>Beginner</option>
+                  <option>Intermediate</option>
+                  <option>Advanced</option>
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={addSkill}
+                  className="w-full rounded-xl bg-indigo-600 px-5 py-3 text-sm font-black text-white transition hover:bg-indigo-700"
+                >
+                  + Add Skill
+                </button>
+              </div>
+
+            </div>
 
           </div>
 
@@ -325,39 +442,67 @@ function Skills({ onNavigate }) {
 
             <div className="mt-6 space-y-3">
 
-              {filteredSkills.length > 0 ? (
+              {loading ? (
+                <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center">
+                  <p className="text-sm font-bold text-slate-500">
+                    Loading skills...
+                  </p>
+                </div>
+              ) : error ? (
+                <div className="rounded-2xl border border-dashed border-red-200 bg-red-50 p-8 text-center">
+                  <p className="text-sm font-bold text-red-500">
+                    Error: {error}
+                  </p>
+                </div>
+              ) : filteredSkills.length > 0 ? (
 
                 filteredSkills.map(
                   (skill) => (
 
                     <div
-                      key={skill.id}
-                      className="group flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:border-indigo-100 hover:bg-indigo-50/40"
+                      key={skill._id}
+                      className="group flex items-start justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:border-indigo-100 hover:bg-indigo-50/40"
                     >
 
-                      <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex min-w-0 flex-1 flex-col gap-2">
 
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-sm font-black text-indigo-600 shadow-sm">
-                          {skill.name
-                            .charAt(0)
-                            .toUpperCase()}
-                        </div>
+                        <div className="flex items-center gap-3">
 
-                        <div className="min-w-0">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-sm font-black text-indigo-600 shadow-sm">
+                            {skill.skillTitle
+                              .charAt(0)
+                              .toUpperCase()}
+                          </div>
 
-                          <p className="truncate text-sm font-black text-slate-800">
-                            {skill.name}
-                          </p>
+                          <div className="min-w-0">
 
-                          <div className="mt-1 flex flex-wrap gap-2">
+                            <p className="truncate text-sm font-black text-slate-800">
+                              {skill.skillTitle}
+                            </p>
 
-                            <span className="text-[10px] font-bold text-slate-400">
-                              {skill.category}
-                            </span>
+                            <div className="mt-2 flex flex-wrap gap-2">
 
-                            <span className="text-[10px] font-bold text-indigo-500">
-                              • {skill.level}
-                            </span>
+                              <span className="text-[10px] font-bold text-slate-400">
+                                {skill.skillCategory}
+                              </span>
+
+                              <span className="text-[10px] font-bold text-indigo-500">
+                                • {skill.skillLevel}
+                              </span>
+
+                              {skill.uid && (
+                                <span className="text-[10px] font-bold text-slate-300">
+                                  • {skill.uid}
+                                </span>
+                              )}
+
+                            </div>
+
+                            {skill.skillDescription && (
+                              <p className="mt-2 text-xs leading-4 text-slate-600">
+                                {skill.skillDescription}
+                              </p>
+                            )}
 
                           </div>
 
@@ -365,16 +510,15 @@ function Skills({ onNavigate }) {
 
                       </div>
 
-
                       <button
                         type="button"
                         onClick={() =>
                           removeSkill(
-                            skill.id
+                            skill._id
                           )
                         }
                         className="rounded-lg px-2 py-1 text-xs font-black text-slate-300 transition hover:bg-red-50 hover:text-red-500"
-                        aria-label={`Remove ${skill.name}`}
+                        aria-label={`Remove ${skill.skillTitle}`}
                       >
                         ×
                       </button>
@@ -427,7 +571,7 @@ function Skills({ onNavigate }) {
                   const exists =
                     skills.some(
                       (item) =>
-                        item.name.toLowerCase() ===
+                        item.skillTitle.toLowerCase() ===
                         skill.toLowerCase()
                     );
 

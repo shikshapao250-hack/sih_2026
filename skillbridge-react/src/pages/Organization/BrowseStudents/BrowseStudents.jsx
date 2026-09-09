@@ -1,111 +1,63 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const students = [
-  {
-    id: 1,
-    name: "Aarav Sharma",
-    education: "B.Tech Computer Science",
-    college: "Delhi Technical University",
-    location: "New Delhi",
-    skills: ["React", "JavaScript", "Python", "Git"],
-    projects: 4,
-    experience: "Fresher",
-    availability: "Available",
-  },
-  {
-    id: 2,
-    name: "Ananya Verma",
-    education: "BCA",
-    college: "Indraprastha College",
-    location: "Noida",
-    skills: ["Python", "SQL", "Machine Learning"],
-    projects: 3,
-    experience: "Fresher",
-    availability: "Available",
-  },
-  {
-    id: 3,
-    name: "Rohan Singh",
-    education: "B.Tech Information Technology",
-    college: "Delhi Institute of Technology",
-    location: "Gurugram",
-    skills: ["React", "Node.js", "MongoDB", "Git"],
-    projects: 6,
-    experience: "1 year",
-    availability: "Open to work",
-  },
-  {
-    id: 4,
-    name: "Priya Kapoor",
-    education: "B.Des",
-    college: "School of Design",
-    location: "Delhi",
-    skills: ["Figma", "UI Design", "UX Research"],
-    projects: 5,
-    experience: "Fresher",
-    availability: "Available",
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 function BrowseStudents({ onNavigate }) {
+  const [students, setStudents] = useState([]);
   const [search, setSearch] = useState("");
-  const [skill, setSkill] = useState("All");
   const [location, setLocation] = useState("All");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const allSkills = [
-    "All",
-    ...new Set(
-      students.flatMap(
-        (student) => student.skills
-      )
-    ),
-  ];
+  useEffect(() => {
+    const fetchStudents = async () => {
+      setLoading(true);
+      setError("");
 
-  const locations = [
-    "All",
-    ...new Set(
-      students.map(
-        (student) => student.location
-      )
-    ),
-  ];
+      try {
+        const response = await fetch(`${API_URL}/students`);
+
+        if (!response.ok) {
+          throw new Error("Failed to load students");
+        }
+
+        const data = await response.json();
+        setStudents(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("[students] Fetch failed", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+
+  const locations = useMemo(() => {
+    const values = students
+      .map((student) => student.location)
+      .filter(Boolean);
+
+    return ["All", ...new Set(values)];
+  }, [students]);
 
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
-      const searchValue =
-        search.toLowerCase();
+      const searchValue = search.toLowerCase();
 
       const matchesSearch =
-        student.name
-          .toLowerCase()
-          .includes(searchValue) ||
-        student.education
-          .toLowerCase()
-          .includes(searchValue) ||
-        student.college
-          .toLowerCase()
-          .includes(searchValue) ||
-        student.skills.some((item) =>
-          item
-            .toLowerCase()
-            .includes(searchValue)
-        );
-
-      const matchesSkill =
-        skill === "All" ||
-        student.skills.includes(skill);
+        student.name?.toLowerCase().includes(searchValue) ||
+        student.course?.toLowerCase().includes(searchValue) ||
+        student.college?.toLowerCase().includes(searchValue) ||
+        student.location?.toLowerCase().includes(searchValue);
 
       const matchesLocation =
-        location === "All" ||
-        student.location === location;
+        location === "All" || student.location === location;
 
-      return (
-        matchesSearch &&
-        matchesSkill &&
-        matchesLocation
-      );
+      return matchesSearch && matchesLocation;
     });
-  }, [search, skill, location]);
+  }, [students, search, location]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -208,57 +160,20 @@ function BrowseStudents({ onNavigate }) {
             </div>
 
 
-            <div className="grid grid-cols-2 gap-2 sm:flex">
-
-              <select
-                value={skill}
-                onChange={(event) =>
-                  setSkill(event.target.value)
-                }
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-600 outline-none focus:border-indigo-500"
-              >
-
-                {allSkills.map(
-                  (item) => (
-                    <option
-                      key={item}
-                      value={item}
-                    >
-                      {item === "All"
-                        ? "All skills"
-                        : item}
-                    </option>
-                  )
-                )}
-
-              </select>
-
-
+            <div className="sm:flex">
               <select
                 value={location}
                 onChange={(event) =>
-                  setLocation(
-                    event.target.value
-                  )
+                  setLocation(event.target.value)
                 }
                 className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-600 outline-none focus:border-indigo-500"
               >
-
-                {locations.map(
-                  (item) => (
-                    <option
-                      key={item}
-                      value={item}
-                    >
-                      {item === "All"
-                        ? "All locations"
-                        : item}
-                    </option>
-                  )
-                )}
-
+                {locations.map((item) => (
+                  <option key={item} value={item}>
+                    {item === "All" ? "All locations" : item}
+                  </option>
+                ))}
               </select>
-
             </div>
 
           </div>
@@ -270,7 +185,15 @@ function BrowseStudents({ onNavigate }) {
             STUDENTS
         =================================== */}
 
-        {filteredStudents.length > 0 ? (
+        {loading ? (
+          <section className="mt-6 rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
+            <p className="text-sm font-bold text-slate-500">Loading students...</p>
+          </section>
+        ) : error ? (
+          <section className="mt-6 rounded-3xl border border-dashed border-red-300 bg-red-50 p-12 text-center">
+            <p className="text-sm font-bold text-red-600">Error: {error}</p>
+          </section>
+        ) : filteredStudents.length > 0 ? (
 
           <section className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 
@@ -278,7 +201,7 @@ function BrowseStudents({ onNavigate }) {
               (student) => (
 
                 <StudentCard
-                  key={student.id}
+                  key={student.uid || student._id || student.email}
                   student={student}
                 />
 
@@ -329,9 +252,7 @@ function StudentCard({ student }) {
         <div className="flex gap-4">
 
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-lg font-black text-white shadow-md">
-            {student.name
-              .charAt(0)
-              .toUpperCase()}
+            {student.name?.charAt(0)?.toUpperCase() || "S"}
           </div>
 
           <div>
@@ -341,84 +262,46 @@ function StudentCard({ student }) {
             </h2>
 
             <p className="mt-1 text-xs font-semibold text-indigo-600">
-              {student.education}
+              {student.course || "Student"}
             </p>
 
           </div>
 
         </div>
 
-        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">
-          ● {student.availability}
-        </span>
-
       </div>
-
 
       {/* COLLEGE */}
-
       <div className="mt-5">
-
         <p className="text-xs font-bold text-slate-400">
-          Education
+          College
         </p>
-
         <p className="mt-1 text-sm font-semibold text-slate-700">
-          {student.college}
+          {student.college || "Not provided"}
         </p>
-
       </div>
-
 
       {/* LOCATION */}
-
       <p className="mt-3 text-xs font-semibold text-slate-500">
-        📍 {student.location}
+        📍 {student.location || "Location not provided"}
       </p>
 
-
-      {/* SKILLS */}
-
-      <div className="mt-5">
-
-        <p className="text-xs font-black text-slate-700">
-          Skills
+      {/* GRADUATION YEAR */}
+      <div className="mt-4">
+        <p className="text-xs font-bold text-slate-400">
+          Graduation Year
         </p>
-
-        <div className="mt-2 flex flex-wrap gap-2">
-
-          {student.skills.map(
-            (item) => (
-
-              <span
-                key={item}
-                className="rounded-full bg-indigo-50 px-2.5 py-1.5 text-[10px] font-bold text-indigo-700"
-              >
-                {item}
-              </span>
-
-            )
-          )}
-
-        </div>
-
+        <p className="mt-1 text-sm font-semibold text-slate-700">
+          {student.graduationYear || "Not provided"}
+        </p>
       </div>
 
-
       {/* FOOTER */}
-
       <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-
         <div className="flex gap-3 text-[11px] font-semibold text-slate-400">
-
           <span>
-            📁 {student.projects} projects
+            {student.email || "No email"}
           </span>
-
-          <span>
-            💼 {student.experience}
-          </span>
-
         </div>
 
         <button
@@ -427,7 +310,6 @@ function StudentCard({ student }) {
         >
           View profile
         </button>
-
       </div>
 
     </article>

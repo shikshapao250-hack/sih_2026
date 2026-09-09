@@ -9,22 +9,6 @@ const roleConfig = {
     icon: "🎓",
     roleName: "Student",
   },
-
-  organization: {
-    title: "Create your organization account",
-    subtitle:
-      "Find talented students and build your future talent pipeline.",
-    icon: "🏢",
-    roleName: "Organization",
-  },
-
-  college: {
-    title: "Create your college account",
-    subtitle:
-      "Connect with students and understand the skills your institution needs.",
-    icon: "🏫",
-    roleName: "College",
-  },
 };
 
 function SignUp({ onLogin, onNavigate }) {
@@ -45,7 +29,6 @@ function SignUp({ onLogin, onNavigate }) {
     email: "",
     password: "",
     confirmPassword: "",
-    organizationName: "",
     collegeName: "",
     location: "",
     course: "",
@@ -126,7 +109,13 @@ function SignUp({ onLogin, onNavigate }) {
         form.email,
         form.password,
         form.name,
-        role
+        role,
+        {
+          course: form.course,
+          graduationYear: form.graduationYear,
+          college: form.collegeName,
+          location: form.location,
+        }
       );
       setLoading(false);
       onLogin(userData);
@@ -288,7 +277,7 @@ function SignUp({ onLogin, onNavigate }) {
 
             {role === "student" && (
               <>
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid gap-5 sm:grid-cols-3">
 
                   <div>
                     <label
@@ -308,6 +297,23 @@ function SignUp({ onLogin, onNavigate }) {
                     />
                   </div>
 
+                  <div>
+                    <label
+                      htmlFor="collegeName"
+                      className="mb-2 block text-sm font-bold text-slate-700"
+                    >
+                      College
+                    </label>
+
+                    <input
+                      id="collegeName"
+                      name="collegeName"
+                      value={form.collegeName}
+                      onChange={handleChange}
+                      placeholder="Your college name"
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50"
+                    />
+                  </div>
 
                   <div>
                     <label
@@ -332,51 +338,6 @@ function SignUp({ onLogin, onNavigate }) {
               </>
             )}
 
-
-            {/* ORGANIZATION */}
-
-            {role === "organization" && (
-              <div>
-                <label
-                  htmlFor="organizationName"
-                  className="mb-2 block text-sm font-bold text-slate-700"
-                >
-                  Organization name
-                </label>
-
-                <input
-                  id="organizationName"
-                  name="organizationName"
-                  value={form.organizationName}
-                  onChange={handleChange}
-                  placeholder="Your organization"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50"
-                />
-              </div>
-            )}
-
-
-            {/* COLLEGE */}
-
-            {role === "college" && (
-              <div>
-                <label
-                  htmlFor="collegeName"
-                  className="mb-2 block text-sm font-bold text-slate-700"
-                >
-                  College / Institution
-                </label>
-
-                <input
-                  id="collegeName"
-                  name="collegeName"
-                  value={form.collegeName}
-                  onChange={handleChange}
-                  placeholder="Your college name"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50"
-                />
-              </div>
-            )}
 
 
             {/* LOCATION */}

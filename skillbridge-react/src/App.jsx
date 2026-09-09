@@ -61,6 +61,47 @@ import CollegeSkillGap from "./pages/College/SkillGap/SkillGap";
 
 import Tests from "./pages/Tests/Tests";
 
+const PAGE_ROUTES = {
+  home: "/",
+  about: "/about",
+  discover: "/discover",
+  login: "/login",
+  signup: "/signup",
+  "role-selection": "/role-selection",
+  student: "/student",
+  "student-profile": "/student/profile",
+  "student-skills": "/student/skills",
+  "student-projects": "/student/projects",
+  "student-education": "/student/education",
+  "student-resume": "/student/resume",
+  "student-opportunities": "/student/opportunities",
+  organization: "/organization",
+  "organization-create-job": "/organization/create-job",
+  "organization-students": "/organization/students",
+  "organization-jobs": "/organization/jobs",
+  college: "/college",
+  "college-students": "/college/students",
+  "college-colleges": "/college/colleges",
+  "college-skill-gap": "/college/skill-gap",
+  tests: "/tests",
+};
+
+const PAGE_ALIASES = {
+  opportunities: "student-opportunities",
+};
+
+function getPageFromPath(pathname) {
+  const page = Object.entries(PAGE_ROUTES).find(
+    ([, route]) => route === pathname
+  )?.[0];
+
+  return page || "home";
+}
+
+function getRouteForPage(page) {
+  return PAGE_ROUTES[PAGE_ALIASES[page] || page] || PAGE_ROUTES.home;
+}
+
 
 function App() {
 
@@ -68,7 +109,22 @@ function App() {
      PAGE
   ========================================== */
 
-  const [page, setPage] = useState("home");
+  const [page, setPage] = useState(() =>
+    getPageFromPath(window.location.pathname)
+  );
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setPage(getPageFromPath(window.location.pathname));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
 
 
   /* ==========================================
@@ -189,8 +245,14 @@ function App() {
   ========================================== */
 
   const navigate = (newPage) => {
+    const resolvedPage = PAGE_ALIASES[newPage] || newPage;
+    const nextRoute = getRouteForPage(resolvedPage);
 
-    setPage(newPage);
+    setPage(resolvedPage);
+
+    if (window.location.pathname !== nextRoute) {
+      window.history.pushState({}, "", nextRoute);
+    }
 
     window.scrollTo({
       top: 0,

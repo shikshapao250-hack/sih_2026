@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 function CreateJob({ user, onNavigate }) {
   const [form, setForm] = useState({
     title: "",
@@ -13,6 +15,7 @@ function CreateJob({ user, onNavigate }) {
   });
 
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -23,7 +26,7 @@ function CreateJob({ user, onNavigate }) {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (
@@ -37,48 +40,71 @@ function CreateJob({ user, onNavigate }) {
       return;
     }
 
-    const newJob = {
-      id: Date.now(),
-      ...form,
-      skills: form.skills
-        .split(",")
-        .map((skill) => skill.trim())
-        .filter(Boolean),
-      organization:
-        user?.name || "Organization",
-      createdAt:
-        new Date().toISOString(),
-      applications: 0,
+    if (!user?.uid) {
+      setMessage("Please sign in before publishing an opportunity.");
+      return;
+    }
+
+    const skills = form.skills
+      .split(",")
+      .map((skill) => skill.trim())
+      .filter(Boolean);
+    const job = {
+      uid: user.uid,
+      title: form.title.trim(),
+      description: form.description.trim(),
+      opportunityType: form.type,
+      workMode: form.mode,
+      type: form.type,
+      mode: form.mode,
+      location: form.location.trim(),
+      skillsRequired: skills,
+      skills,
+      compensation: form.compensation.trim(),
+      applicationDeadline: form.deadline,
+      deadline: form.deadline,
+      organization: user.name || "Organization",
     };
 
-    const existingJobs = JSON.parse(
-      localStorage.getItem(
-        "skillbridge_jobs"
-      ) || "[]"
-    );
+    setIsSubmitting(true);
+    setMessage("");
 
-    localStorage.setItem(
-      "skillbridge_jobs",
-      JSON.stringify([
-        ...existingJobs,
-        newJob,
-      ])
-    );
+    try {
+      const response = await fetch(`${API_URL}/jobs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(job),
+      });
 
-    setMessage(
-      "Job created successfully."
-    );
+      let responseBody;
+      try {
+        responseBody = await response.json();
+      } catch {
+        responseBody = {};
+      }
 
-    setForm({
-      title: "",
-      type: "Internship",
-      mode: "Remote",
-      location: "",
-      description: "",
-      skills: "",
-      compensation: "",
-      deadline: "",
-    });
+      if (!response.ok) {
+        throw new Error(responseBody.error || "Unable to publish opportunity.");
+      }
+
+      setMessage("Opportunity published successfully.");
+      setForm({
+        title: "",
+        type: "Internship",
+        mode: "Remote",
+        location: "",
+        description: "",
+        skills: "",
+        compensation: "",
+        deadline: "",
+      });
+    } catch (error) {
+      setMessage(error.message || "Unable to publish opportunity.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -311,9 +337,10 @@ function CreateJob({ user, onNavigate }) {
 
             <button
               type="submit"
+              disabled={isSubmitting}
               className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700"
             >
-              Publish opportunity →
+              {isSubmitting ? "Publishing..." : "Publish opportunity →"}
             </button>
 
           </div>

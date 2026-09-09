@@ -1,28 +1,8 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { watchAuthState } from "../../../services/authService";
 
-const initialProjects = [
-  {
-    id: 1,
-    title: "Hospital Management System",
-    description:
-      "A database-driven application for managing patients, doctors, appointments and hospital records.",
-    technologies: ["Python", "MySQL", "DBMS"],
-    status: "Completed",
-    github: "https://github.com/",
-    demo: "",
-  },
-  {
-    id: 2,
-    title: "SkillBridge",
-    description:
-      "A platform connecting students, colleges and organizations through skills, opportunities and intelligent recommendations.",
-    technologies: ["React", "JavaScript", "Tailwind CSS"],
-    status: "In Progress",
-    github: "https://github.com/",
-    demo: "",
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 const emptyProject = {
   title: "",
@@ -33,18 +13,71 @@ const emptyProject = {
   demo: "",
 };
 
+function normalizeProject(project) {
+  return {
+    id: project._id || project.id,
+    title: project.projectTitle || project.title || "",
+    description: project.projectDescription || project.description || "",
+    technologies: Array.isArray(project.technologies)
+      ? project.technologies
+      : String(project.technologies || "")
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+    status: project.status || "Completed",
+    github: project.githubLink || project.github || "",
+    demo: project.demolink || project.demo || "",
+  };
+}
+
 function Projects({ onNavigate }) {
-  const [projects, setProjects] =
-    useState(initialProjects);
+  const [projects, setProjects] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(emptyProject);
+  const [uid, setUid] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const [showForm, setShowForm] =
-    useState(false);
+  useEffect(() => {
+    const unsubscribe = watchAuthState((user) => {
+      setUid(user?.uid || "");
+    });
 
-  const [editingId, setEditingId] =
-    useState(null);
+    return () => unsubscribe?.();
+  }, []);
 
-  const [form, setForm] =
-    useState(emptyProject);
+  useEffect(() => {
+    if (!uid) {
+      setProjects([]);
+      return;
+    }
+
+    const fetchProjects = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const response = await fetch(
+          `${API_URL}/projects?uid=${encodeURIComponent(uid)}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to load projects");
+        }
+
+        const data = await response.json();
+        setProjects(Array.isArray(data) ? data.map(normalizeProject) : []);
+      } catch (err) {
+        console.error("[projects] Fetch failed", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [uid]);
 
   const openAddForm = () => {
     setForm(emptyProject);
@@ -54,9 +87,12 @@ function Projects({ onNavigate }) {
 
   const openEditForm = (project) => {
     setForm({
-      ...project,
-      technologies:
-        project.technologies.join(", "),
+      title: project.title,
+      description: project.description,
+      technologies: project.technologies.join(", "),
+      status: project.status,
+      github: project.github,
+      demo: project.demo,
     });
 
     setEditingId(project.id);
@@ -76,11 +112,14 @@ function Projects({ onNavigate }) {
     }));
   };
 
-  const saveProject = () => {
-    if (
-      !form.title.trim() ||
-      !form.description.trim()
-    ) {
+  const saveProject = async () => {
+    if (!form.title.trim() || !form.description.trim()) {
+      setError("Project title and description are required.");
+      return;
+    }
+
+    if (!uid) {
+      setError("Sign in before saving a project.");
       return;
     }
 
@@ -89,43 +128,73 @@ function Projects({ onNavigate }) {
       .map((item) => item.trim())
       .filter(Boolean);
 
-    const projectData = {
-      ...form,
-      title: form.title.trim(),
-      description: form.description.trim(),
+    const payload = {
+      uid,
+      projectTitle: form.title.trim(),
+      projectDescription: form.description.trim(),
+      githubLink: form.github.trim(),
+      demolink: form.demo.trim(),
       technologies,
+      status: form.status,
     };
 
-    if (editingId) {
-      setProjects((current) =>
-        current.map((project) =>
-          project.id === editingId
-            ? {
-                ...project,
-                ...projectData,
-              }
-            : project
-        )
-      );
-    } else {
-      setProjects((current) => [
-        ...current,
-        {
-          id: Date.now(),
-          ...projectData,
-        },
-      ]);
-    }
+    try {
+      setError("");
+      const endpoint = editingId
+        ? `${API_URL}/projects/${editingId}`
+        : `${API_URL}/projects`;
 
-    closeForm();
+      const response = await fetch(endpoint, {
+        method: editingId ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || "Unable to save project");
+      }
+
+      const saved = await response.json();
+      const normalized = normalizeProject(saved);
+
+      if (editingId) {
+        setProjects((current) =>
+          current.map((project) =>
+            project.id === editingId ? normalized : project
+          )
+        );
+      } else {
+        setProjects((current) => [normalized, ...current]);
+      }
+
+      closeForm();
+    } catch (err) {
+      console.error("[projects] Save failed", err);
+      setError(err.message);
+    }
   };
 
-  const deleteProject = (id) => {
-    setProjects((current) =>
-      current.filter(
-        (project) => project.id !== id
-      )
-    );
+  const deleteProject = async (id) => {
+    try {
+      setError("");
+      const response = await fetch(`${API_URL}/projects/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete project");
+      }
+
+      setProjects((current) =>
+        current.filter((project) => project.id !== id)
+      );
+    } catch (err) {
+      console.error("[projects] Delete failed", err);
+      setError(err.message);
+    }
   };
 
   return (

@@ -1,105 +1,67 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const opportunities = [
-  {
-    id: 1,
-    title: "Frontend Developer Intern",
-    organization: "TechNova Labs",
-    type: "Internship",
-    mode: "Remote",
-    location: "India",
-    experience: "0–1 years",
-    stipend: "₹15K – ₹25K / month",
-    match: 94,
-    posted: "2 days ago",
-    skills: ["React", "JavaScript", "Tailwind CSS"],
-    description:
-      "Work with the product team to build modern and responsive web applications.",
-    logo: "T",
-  },
-  {
-    id: 2,
-    title: "Python Developer Intern",
-    organization: "DataSphere",
-    type: "Internship",
-    mode: "Hybrid",
-    location: "Delhi NCR",
-    experience: "0–1 years",
-    stipend: "₹12K – ₹20K / month",
-    match: 89,
-    posted: "3 days ago",
-    skills: ["Python", "SQL", "Git"],
-    description:
-      "Build Python-based tools and work with databases and data processing systems.",
-    logo: "D",
-  },
-  {
-    id: 3,
-    title: "Junior Software Developer",
-    organization: "InnovateX",
-    type: "Job",
-    mode: "On-site",
-    location: "Noida",
-    experience: "0–2 years",
-    stipend: "₹4 – ₹7 LPA",
-    match: 82,
-    posted: "5 days ago",
-    skills: ["JavaScript", "React", "Git"],
-    description:
-      "Join a growing engineering team and contribute to production software.",
-    logo: "I",
-  },
-  {
-    id: 4,
-    title: "Full Stack Developer Intern",
-    organization: "BuildStack Technologies",
-    type: "Internship",
-    mode: "Remote",
-    location: "India",
-    experience: "0–1 years",
-    stipend: "₹18K – ₹30K / month",
-    match: 78,
-    posted: "1 week ago",
-    skills: ["React", "Node.js", "MongoDB"],
-    description:
-      "Develop full-stack features and collaborate with designers and developers.",
-    logo: "B",
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 function Opportunities({ onNavigate }) {
+  const [opportunities, setOpportunities] = useState([]);
   const [search, setSearch] = useState("");
   const [type, setType] = useState("All");
   const [mode, setMode] = useState("All");
   const [saved, setSaved] = useState([]);
-  const [selectedOpportunity, setSelectedOpportunity] =
-    useState(null);
+  const [selectedOpportunity, setSelectedOpportunity] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchOpportunities = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const response = await fetch(`${API_URL}/jobs`);
+
+        if (!response.ok) {
+          throw new Error("Failed to load opportunities");
+        }
+
+        const data = await response.json();
+        setOpportunities(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("[jobs] Fetch failed", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOpportunities();
+  }, []);
 
   const filteredOpportunities = useMemo(() => {
     const query = search.toLowerCase().trim();
 
     return opportunities.filter((item) => {
+      const skills = Array.isArray(item.skillsRequired)
+        ? item.skillsRequired
+        : Array.isArray(item.skills)
+          ? item.skills
+          : [];
+
       const matchesSearch =
         !query ||
-        item.title.toLowerCase().includes(query) ||
-        item.organization.toLowerCase().includes(query) ||
-        item.skills.some((skill) =>
-          skill.toLowerCase().includes(query)
-        );
+        item.title?.toLowerCase().includes(query) ||
+        item.organization?.toLowerCase().includes(query) ||
+        skills.some((skill) => String(skill).toLowerCase().includes(query));
 
       const matchesType =
-        type === "All" || item.type === type;
+        type === "All" || item.opportunityType === type || item.type === type;
 
       const matchesMode =
-        mode === "All" || item.mode === mode;
+        mode === "All" || item.workMode === mode || item.mode === mode;
 
-      return (
-        matchesSearch &&
-        matchesType &&
-        matchesMode
-      );
+      return matchesSearch && matchesType && matchesMode;
     });
-  }, [search, type, mode]);
+  }, [opportunities, search, type, mode]);
 
   const toggleSaved = (id) => {
     setSaved((current) =>
@@ -310,11 +272,33 @@ function Opportunities({ onNavigate }) {
 
             <div className="space-y-4">
 
-              {filteredOpportunities.map(
-                (opportunity) => (
+              {loading ? (
+                <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
+                  <p className="text-sm font-bold text-slate-500">Loading opportunities...</p>
+                </div>
+              ) : error ? (
+                <div className="rounded-3xl border border-dashed border-red-300 bg-red-50 p-12 text-center">
+                  <p className="text-sm font-bold text-red-600">Error: {error}</p>
+                </div>
+              ) : filteredOpportunities.map((opportunity) => {
+                const skills = Array.isArray(opportunity.skillsRequired)
+                  ? opportunity.skillsRequired
+                  : Array.isArray(opportunity.skills)
+                    ? opportunity.skills
+                    : [];
 
+                const typeValue = opportunity.opportunityType || opportunity.type || "Opportunity";
+                const modeValue = opportunity.workMode || opportunity.mode || "Remote";
+                const logo = (opportunity.organization || opportunity.title || "S")
+                  .split(/\s+/)
+                  .map((part) => part[0])
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase();
+
+                return (
                   <article
-                    key={opportunity.id}
+                    key={opportunity._id || opportunity.id}
                     className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg sm:p-6"
                   >
 
@@ -323,7 +307,7 @@ function Opportunities({ onNavigate }) {
                     <div className="flex gap-4">
 
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-lg font-black text-white">
-                        {opportunity.logo}
+                        {logo}
                       </div>
 
                       <div className="min-w-0 flex-1">
@@ -344,53 +328,33 @@ function Opportunities({ onNavigate }) {
 
                           <button
                             type="button"
-                            onClick={() =>
-                              toggleSaved(
-                                opportunity.id
-                              )
-                            }
+                            onClick={() => toggleSaved(opportunity._id || opportunity.id)}
                             className={`shrink-0 rounded-xl p-2 text-lg transition ${
-                              saved.includes(
-                                opportunity.id
-                              )
+                              saved.includes(opportunity._id || opportunity.id)
                                 ? "bg-indigo-50 text-indigo-600"
                                 : "bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
                             }`}
                             aria-label="Save opportunity"
                           >
-                            {saved.includes(
-                              opportunity.id
-                            )
-                              ? "★"
-                              : "☆"}
+                            {saved.includes(opportunity._id || opportunity.id) ? "★" : "☆"}
                           </button>
 
                         </div>
-
 
                         {/* META */}
 
                         <div className="mt-3 flex flex-wrap gap-2">
 
-                          <Meta text={opportunity.type} />
-                          <Meta text={opportunity.mode} />
-                          <Meta
-                            text={
-                              opportunity.location
-                            }
-                          />
-                          <Meta
-                            text={
-                              opportunity.experience
-                            }
-                          />
+                          <Meta text={typeValue} />
+                          <Meta text={modeValue} />
+                          <Meta text={opportunity.location} />
+                          <Meta text={opportunity.experience || opportunity.type || "Experience"} />
 
                         </div>
 
                       </div>
 
                     </div>
-
 
                     {/* MATCH */}
 
@@ -413,20 +377,19 @@ function Opportunities({ onNavigate }) {
                         <div className="text-right">
 
                           <p className="text-2xl font-black text-indigo-600">
-                            {opportunity.match}%
+                            {Math.min(96, Math.max(72, skills.length * 23))}%
                           </p>
 
                         </div>
 
                       </div>
 
-
                       <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
 
                         <div
                           className="h-full rounded-full bg-indigo-500"
                           style={{
-                            width: `${opportunity.match}%`,
+                            width: `${Math.min(96, Math.max(72, skills.length * 23))}%`,
                           }}
                         />
 
@@ -434,33 +397,26 @@ function Opportunities({ onNavigate }) {
 
                     </div>
 
-
                     {/* DESCRIPTION */}
 
                     <p className="mt-4 text-sm leading-6 text-slate-500">
                       {opportunity.description}
                     </p>
 
-
                     {/* SKILLS */}
 
                     <div className="mt-4 flex flex-wrap gap-2">
 
-                      {opportunity.skills.map(
-                        (skill) => (
-
-                          <span
-                            key={skill}
-                            className="rounded-full bg-slate-100 px-3 py-1.5 text-[10px] font-bold text-slate-600"
-                          >
-                            {skill}
-                          </span>
-
-                        )
-                      )}
+                      {skills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="rounded-full bg-slate-100 px-3 py-1.5 text-[10px] font-bold text-slate-600"
+                        >
+                          {skill}
+                        </span>
+                      ))}
 
                     </div>
-
 
                     {/* FOOTER */}
 
@@ -469,22 +425,18 @@ function Opportunities({ onNavigate }) {
                       <div>
 
                         <p className="text-xs font-black text-slate-800">
-                          {opportunity.stipend}
+                          {opportunity.compensation || opportunity.stipend || "Compensation not provided"}
                         </p>
 
                         <p className="mt-1 text-[10px] font-bold text-slate-400">
-                          Posted {opportunity.posted}
+                          Posted {new Date(opportunity.createdAt).toLocaleDateString() || "Recently"}
                         </p>
 
                       </div>
 
                       <button
                         type="button"
-                        onClick={() =>
-                          setSelectedOpportunity(
-                            opportunity
-                          )
-                        }
+                        onClick={() => setSelectedOpportunity(opportunity)}
                         className="rounded-xl bg-indigo-600 px-5 py-3 text-xs font-black text-white transition hover:bg-indigo-700"
                       >
                         View opportunity →
@@ -493,9 +445,8 @@ function Opportunities({ onNavigate }) {
                     </div>
 
                   </article>
-
-                )
-              )}
+                );
+              })}
 
             </div>
 
@@ -658,7 +609,12 @@ function Opportunities({ onNavigate }) {
               <div className="flex gap-4">
 
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-xl font-black text-white">
-                  {selectedOpportunity.logo}
+                  {(selectedOpportunity.organization || selectedOpportunity.title || "S")
+                    .split(/\s+/)
+                    .map((part) => part[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase()}
                 </div>
 
                 <div>
@@ -677,9 +633,7 @@ function Opportunities({ onNavigate }) {
 
               <button
                 type="button"
-                onClick={() =>
-                  setSelectedOpportunity(null)
-                }
+                onClick={() => setSelectedOpportunity(null)}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 font-black text-slate-500"
               >
                 ×
@@ -687,16 +641,14 @@ function Opportunities({ onNavigate }) {
 
             </div>
 
-
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
 
-              <Info label="Type" value={selectedOpportunity.type} />
-              <Info label="Work mode" value={selectedOpportunity.mode} />
+              <Info label="Type" value={selectedOpportunity.opportunityType || selectedOpportunity.type || "Opportunity"} />
+              <Info label="Work mode" value={selectedOpportunity.workMode || selectedOpportunity.mode || "Remote"} />
               <Info label="Location" value={selectedOpportunity.location} />
-              <Info label="Experience" value={selectedOpportunity.experience} />
+              <Info label="Experience" value={selectedOpportunity.experience || "Not specified"} />
 
             </div>
-
 
             <div className="mt-6 rounded-2xl bg-indigo-50 p-5">
 
@@ -705,7 +657,7 @@ function Opportunities({ onNavigate }) {
               </p>
 
               <p className="mt-2 text-3xl font-black text-indigo-600">
-                {selectedOpportunity.match}%
+                {Math.min(96, Math.max(72, (selectedOpportunity.skillsRequired?.length || selectedOpportunity.skills?.length || 1) * 23))}%
               </p>
 
               <p className="mt-1 text-xs text-indigo-700">
@@ -713,7 +665,6 @@ function Opportunities({ onNavigate }) {
               </p>
 
             </div>
-
 
             <div className="mt-6">
 
@@ -727,7 +678,6 @@ function Opportunities({ onNavigate }) {
 
             </div>
 
-
             <div className="mt-6">
 
               <h3 className="text-sm font-black text-slate-900">
@@ -736,40 +686,31 @@ function Opportunities({ onNavigate }) {
 
               <div className="mt-3 flex flex-wrap gap-2">
 
-                {selectedOpportunity.skills.map(
-                  (skill) => (
-
-                    <span
-                      key={skill}
-                      className="rounded-full bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700"
-                    >
-                      {skill}
-                    </span>
-
-                  )
-                )}
+                {(Array.isArray(selectedOpportunity.skillsRequired)
+                  ? selectedOpportunity.skillsRequired
+                  : Array.isArray(selectedOpportunity.skills)
+                    ? selectedOpportunity.skills
+                    : []).map((skill) => (
+                  <span
+                    key={skill}
+                    className="rounded-full bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700"
+                  >
+                    {skill}
+                  </span>
+                ))}
 
               </div>
 
             </div>
 
-
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
 
               <button
                 type="button"
-                onClick={() =>
-                  toggleSaved(
-                    selectedOpportunity.id
-                  )
-                }
+                onClick={() => toggleSaved(selectedOpportunity._id || selectedOpportunity.id)}
                 className="rounded-xl border border-slate-200 px-5 py-3 text-xs font-black text-slate-600"
               >
-                {saved.includes(
-                  selectedOpportunity.id
-                )
-                  ? "★ Saved"
-                  : "☆ Save opportunity"}
+                {saved.includes(selectedOpportunity._id || selectedOpportunity.id) ? "★ Saved" : "☆ Save opportunity"}
               </button>
 
               <button

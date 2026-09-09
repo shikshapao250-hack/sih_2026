@@ -41,6 +41,13 @@ async function syncUserWithBackend(user, profile) {
     role: getBackendRole(profile.role),
   };
 
+  if (body.role === "STUDENT") {
+    body.course = String(profile.course || "").trim();
+    body.graduationYear = String(profile.graduationYear || "").trim();
+    body.college = String(profile.college || "").trim();
+    body.location = String(profile.location || "").trim();
+  }
+
   console.info("[auth] Syncing user with backend", {
     endpoint: `${API_URL}/auth/user`,
     uid: body.uid,
@@ -202,10 +209,14 @@ export async function loginAndSyncUser(email, password, role) {
       ? profile.name
       : user.displayName,
     role,
+    course: profile.course,
+    graduationYear: profile.graduationYear,
+    college: profile.college,
+    location: profile.location,
   });
 }
 
-export async function registerAndSyncUser(email, password, name, role) {
+export async function registerAndSyncUser(email, password, name, role, profile = {}) {
   const user = await registerWithEmailAndPassword(email, password);
   console.info("[auth] Firebase account created", { uid: user.uid, email: user.email });
 
@@ -220,7 +231,7 @@ export async function registerAndSyncUser(email, password, name, role) {
   }
 
   await updateProfile(user, { displayName: String(name || "").trim() });
-  return syncUserWithBackend(user, { name, role });
+  return syncUserWithBackend(user, { name, role, ...profile });
 }
 
 export async function logoutUser() {

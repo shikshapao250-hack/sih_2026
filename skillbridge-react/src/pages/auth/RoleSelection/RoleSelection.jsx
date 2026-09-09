@@ -11,30 +11,6 @@ const roles = [
       "Find jobs & internships",
     ],
   },
-  {
-    id: "organization",
-    icon: "🏢",
-    title: "I'm an Organization",
-    description:
-      "Find talented students and create opportunities that match the skills your organization needs.",
-    features: [
-      "Create jobs & internships",
-      "Browse students",
-      "Discover relevant talent",
-    ],
-  },
-  {
-    id: "college",
-    icon: "🏫",
-    title: "I'm a College",
-    description:
-      "Understand your students' skills, explore other institutions, and identify industry skill gaps.",
-    features: [
-      "Browse students",
-      "Explore colleges",
-      "Analyze skill gaps",
-    ],
-  },
 ];
 
 function RoleSelection({ onNavigate }) {
@@ -74,7 +50,7 @@ function RoleSelection({ onNavigate }) {
 
 
         {/* ROLE CARDS */}
-        <div className="mt-10 grid gap-5 md:grid-cols-3 lg:mt-14">
+        <div className="mt-10 grid gap-5 md:grid-cols-1 lg:mt-14">
 
           {roles.map((role) => (
 

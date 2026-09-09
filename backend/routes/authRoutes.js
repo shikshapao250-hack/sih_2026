@@ -19,14 +19,28 @@ const userSchema = new mongoose.Schema(
 	{ timestamps: true }
 );
 
+const studentSchema = new mongoose.Schema(
+	{
+		uid: { type: String, required: true, unique: true, index: true },
+		name: { type: String, required: true, trim: true },
+		course: { type: String, trim: true, default: '' },
+		email: { type: String, required: true, trim: true, lowercase: true },
+		role: { type: String, required: true, enum: [ROLES.STUDENT] },
+		graduationYear: { type: String, trim: true, default: '' },
+		college: { type: String, trim: true, default: '' },
+		location: { type: String, trim: true, default: '' },
+	},
+	{ timestamps: true }
+);
+
 const roleModels = {
-	[ROLES.STUDENT]: mongoose.model('Student', userSchema, 'students'),
+	[ROLES.STUDENT]: mongoose.model('Student', studentSchema, 'students'),
 	[ROLES.COLLEGE]: mongoose.model('College', userSchema, 'colleges'),
 	[ROLES.ORGANISATION]: mongoose.model('Organisation', userSchema, 'organisations'),
 };
 
 router.post('/user', async (req, res) => {
-	const { uid, name, email, role } = req.body ?? {};
+	const { uid, name, course, email, role, graduationYear, college, location } = req.body ?? {};
 	console.info('[auth] POST /auth/user', { uid, email, role });
 
 	if (!uid || !name || !email || !role) {
@@ -40,9 +54,18 @@ router.post('/user', async (req, res) => {
 	}
 
 	try {
+		const userData = { uid, name, email, role };
+
+		if (role === ROLES.STUDENT) {
+			userData.course = course;
+			userData.graduationYear = graduationYear;
+			userData.college = college;
+			userData.location = location;
+		}
+
 		const user = await roleModels[role].findOneAndUpdate(
 			{ uid },
-			{ uid, name, email, role },
+			userData,
 			{ new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
 		);
 
@@ -67,7 +90,7 @@ router.get('/user/:uid', async (req, res) => {
 		const users = await Promise.all(
 			Object.entries(roleModels).map(async ([role, model]) => ({
 				role,
-				user: await model.findOne({ uid }).select('uid role').lean(),
+				user: await model.findOne({ uid }).lean(),
 			}))
 		);
 		const match = users.find(({ user }) => user);
@@ -78,11 +101,12 @@ router.get('/user/:uid', async (req, res) => {
 		}
 
 		console.info('[auth] Role lookup succeeded', { uid, role: match.role });
-		return res.status(200).json({ uid: match.user.uid, role: match.role });
+		return res.status(200).json({ ...match.user, role: match.role });
 	} catch (error) {
 		console.error('[auth] Role lookup failed', { uid, message: error.message });
 		return res.status(500).json({ error: 'Unable to check user role' });
 	}
 });
+
 
 export default router;

@@ -1,113 +1,65 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const students = [
-  {
-    id: 1,
-    name: "Aarav Sharma",
-    degree: "B.Tech Computer Science",
-    year: "3rd Year",
-    skills: ["React", "JavaScript", "Python", "Git"],
-    projects: 4,
-    location: "New Delhi",
-    status: "Available",
-  },
-  {
-    id: 2,
-    name: "Ananya Verma",
-    degree: "BCA",
-    year: "2nd Year",
-    skills: ["Python", "SQL", "Machine Learning"],
-    projects: 3,
-    location: "Noida",
-    status: "Available",
-  },
-  {
-    id: 3,
-    name: "Rohan Singh",
-    degree: "B.Tech Information Technology",
-    year: "4th Year",
-    skills: ["React", "Node.js", "MongoDB", "Git"],
-    projects: 6,
-    location: "Gurugram",
-    status: "Open to opportunities",
-  },
-  {
-    id: 4,
-    name: "Priya Kapoor",
-    degree: "B.Des",
-    year: "3rd Year",
-    skills: ["Figma", "UI Design", "UX Research"],
-    projects: 5,
-    location: "Delhi",
-    status: "Available",
-  },
-  {
-    id: 5,
-    name: "Kabir Mehta",
-    degree: "B.Tech AI & Data Science",
-    year: "4th Year",
-    skills: ["Python", "Machine Learning", "SQL", "Power BI"],
-    projects: 7,
-    location: "Delhi",
-    status: "Available",
-  },
-  {
-    id: 6,
-    name: "Meera Joshi",
-    degree: "BCA",
-    year: "3rd Year",
-    skills: ["Java", "SQL", "HTML", "CSS"],
-    projects: 4,
-    location: "Ghaziabad",
-    status: "Available",
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 function BrowseStudents({ onNavigate }) {
+  const [students, setStudents] = useState([]);
   const [search, setSearch] = useState("");
-  const [skill, setSkill] = useState("All");
-  const [year, setYear] = useState("All");
+  const [college, setCollege] = useState("All");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const skills = [
-    "All",
-    ...new Set(
-      students.flatMap((student) => student.skills)
-    ),
-  ];
+  useEffect(() => {
+    const fetchStudents = async () => {
+      setLoading(true);
+      setError("");
 
-  const years = [
-    "All",
-    ...new Set(
-      students.map((student) => student.year)
-    ),
-  ];
+      try {
+        const response = await fetch(`${API_URL}/students`);
+
+        if (!response.ok) {
+          throw new Error("Failed to load students");
+        }
+
+        const data = await response.json();
+        setStudents(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("[students] Fetch failed", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+
+  const colleges = useMemo(() => {
+    const values = students
+      .map((student) => student.college)
+      .filter(Boolean);
+
+    return ["All", ...new Set(values)];
+  }, [students]);
 
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
       const query = search.toLowerCase();
 
       const matchesSearch =
-        student.name.toLowerCase().includes(query) ||
-        student.degree.toLowerCase().includes(query) ||
-        student.skills.some((item) =>
-          item.toLowerCase().includes(query)
-        );
+        student.name?.toLowerCase().includes(query) ||
+        student.course?.toLowerCase().includes(query) ||
+        student.college?.toLowerCase().includes(query) ||
+        student.location?.toLowerCase().includes(query) ||
+        student.graduationYear?.toLowerCase().includes(query);
 
-      const matchesSkill =
-        skill === "All" ||
-        student.skills.includes(skill);
+      const matchesCollege =
+        college === "All" ||
+        student.college === college;
 
-      const matchesYear =
-        year === "All" ||
-        student.year === year;
-
-      return (
-        matchesSearch &&
-        matchesSkill &&
-        matchesYear
-      );
+      return matchesSearch && matchesCollege;
     });
-  }, [search, skill, year]);
+  }, [students, search, college]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -184,32 +136,18 @@ function BrowseStudents({ onNavigate }) {
 
           {/* FILTERS */}
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:flex">
+          <div className="mt-4 sm:flex">
 
             <select
-              value={skill}
+              value={college}
               onChange={(event) =>
-                setSkill(event.target.value)
+                setCollege(event.target.value)
               }
               className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-600 outline-none focus:border-indigo-500"
             >
-              {skills.map((item) => (
-                <option key={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={year}
-              onChange={(event) =>
-                setYear(event.target.value)
-              }
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-600 outline-none focus:border-indigo-500"
-            >
-              {years.map((item) => (
-                <option key={item}>
-                  {item}
+              {colleges.map((item) => (
+                <option key={item} value={item}>
+                  {item === "All" ? "All colleges" : item}
                 </option>
               ))}
             </select>
@@ -231,8 +169,7 @@ function BrowseStudents({ onNavigate }) {
             type="button"
             onClick={() => {
               setSearch("");
-              setSkill("All");
-              setYear("All");
+              setCollege("All");
             }}
             className="text-xs font-bold text-indigo-600 hover:text-indigo-800"
           >
@@ -244,13 +181,21 @@ function BrowseStudents({ onNavigate }) {
 
         {/* STUDENT CARDS */}
 
-        {filteredStudents.length > 0 ? (
+        {loading ? (
+          <section className="mt-5 rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
+            <p className="text-sm font-bold text-slate-500">Loading students...</p>
+          </section>
+        ) : error ? (
+          <section className="mt-5 rounded-3xl border border-dashed border-red-300 bg-red-50 p-12 text-center">
+            <p className="text-sm font-bold text-red-600">Error: {error}</p>
+          </section>
+        ) : filteredStudents.length > 0 ? (
 
           <section className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 
             {filteredStudents.map((student) => (
               <StudentCard
-                key={student.id}
+                key={student.uid || student._id || student.email}
                 student={student}
               />
             ))}
@@ -299,7 +244,7 @@ function StudentCard({ student }) {
         <div className="flex min-w-0 gap-3">
 
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-base font-black text-white">
-            {student.name.charAt(0)}
+            {student.name?.charAt(0)?.toUpperCase() || "S"}
           </div>
 
           <div className="min-w-0">
@@ -309,72 +254,44 @@ function StudentCard({ student }) {
             </h2>
 
             <p className="mt-1 text-xs font-semibold text-indigo-600">
-              {student.degree}
+              {student.course || "Student"}
             </p>
 
           </div>
 
         </div>
 
-        <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-black text-emerald-700">
-          ● Available
-        </span>
-
       </div>
-
 
       {/* EDUCATION */}
-
       <div className="mt-5 rounded-xl bg-slate-50 p-3">
-
         <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-          Current education
+          College
         </p>
-
         <p className="mt-1 text-xs font-bold text-slate-700">
-          {student.year}
+          {student.college || "Not provided"}
         </p>
-
       </div>
-
 
       {/* LOCATION */}
-
       <p className="mt-4 text-xs font-semibold text-slate-500">
-        📍 {student.location}
+        📍 {student.location || "Location not provided"}
       </p>
 
-
-      {/* SKILLS */}
-
-      <div className="mt-5">
-
-        <p className="text-xs font-black text-slate-700">
-          Skills
+      {/* GRADUATION YEAR */}
+      <div className="mt-4">
+        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+          Graduation Year
         </p>
-
-        <div className="mt-2 flex flex-wrap gap-2">
-
-          {student.skills.map((item) => (
-            <span
-              key={item}
-              className="rounded-full bg-indigo-50 px-2.5 py-1.5 text-[10px] font-bold text-indigo-700"
-            >
-              {item}
-            </span>
-          ))}
-
-        </div>
-
+        <p className="mt-1 text-xs font-bold text-slate-700">
+          {student.graduationYear || "Not provided"}
+        </p>
       </div>
 
-
       {/* FOOTER */}
-
       <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-
         <span className="text-[11px] font-bold text-slate-400">
-          📁 {student.projects} projects
+          {student.email || "No email"}
         </span>
 
         <button
@@ -383,7 +300,6 @@ function StudentCard({ student }) {
         >
           View profile
         </button>
-
       </div>
 
     </article>
