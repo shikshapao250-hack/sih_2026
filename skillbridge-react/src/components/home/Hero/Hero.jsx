@@ -31,7 +31,7 @@ function Hero({ onNavigate }) {
 
           {/* Description */}
           <p className="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
-            SkillBridge connects students, colleges and organizations
+            SkillShala connects students, colleges and organizations
             in one professional ecosystem — helping people discover
             skills, opportunities and meaningful connections.
           </p>
@@ -55,7 +55,7 @@ function Hero({ onNavigate }) {
               onClick={() => onNavigate("discover")}
               className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
             >
-              Explore SkillBridge
+              Explore SkillShala
             </button>
 
           </div>
@@ -97,7 +97,7 @@ function Hero({ onNavigate }) {
               </div>
 
               <span className="text-xs font-bold text-slate-400">
-                SkillBridge
+                SkillShala
               </span>
             </div>
 

@@ -47,7 +47,7 @@ function Home({ onNavigate }) {
 
             <p className="mt-4 text-base leading-7 text-slate-500">
               Whether you're building your career, discovering talent,
-              or helping students become industry-ready, SkillBridge
+              or helping students become industry-ready, SkillShala
               brings everyone together.
             </p>
           </div>
@@ -108,7 +108,7 @@ function Home({ onNavigate }) {
             </h2>
 
             <p className="mt-4 text-base leading-7 text-slate-500">
-              SkillBridge turns your skills and goals into meaningful
+              SkillShala turns your skills and goals into meaningful
               connections and opportunities.
             </p>
           </div>
@@ -124,7 +124,7 @@ function Home({ onNavigate }) {
 
           <div className="mx-auto max-w-2xl text-center">
             <span className="text-sm font-bold text-indigo-600">
-              WHY SKILLBRIDGE
+              WHY SKILLSHALA
             </span>
 
             <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
@@ -176,7 +176,7 @@ function Home({ onNavigate }) {
             </h2>
 
             <p className="mt-5 max-w-xl text-base leading-7 text-slate-300">
-              SkillBridge can help colleges understand what students
+              SkillShala can help colleges understand what students
               know today, what organizations are looking for, and
               where the biggest skill gaps exist.
             </p>
@@ -186,7 +186,7 @@ function Home({ onNavigate }) {
               onClick={() => onNavigate("signup")}
               className="mt-8 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-slate-900 transition hover:bg-indigo-50"
             >
-              Explore SkillBridge
+              Explore SkillShala
             </button>
           </div>
 
@@ -273,7 +273,7 @@ function Home({ onNavigate }) {
             onClick={() => onNavigate("signup")}
             className="mt-8 rounded-xl bg-white px-7 py-3.5 text-sm font-bold text-indigo-700 shadow-lg transition hover:-translate-y-0.5 hover:bg-indigo-50"
           >
-            Join SkillBridge →
+            Join SkillShala →
           </button>
 
         </div>

@@ -256,7 +256,7 @@ function Tests({ onGoBack }) {
 
         <div>
           <p className="tests-eyebrow">
-            SKILLBRIDGE • AI ASSESSMENT
+            SKILLSHALA • AI ASSESSMENT
           </p>
 
           <h1>

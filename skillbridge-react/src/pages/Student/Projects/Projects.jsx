@@ -560,7 +560,7 @@ function Projects({ onNavigate }) {
                       event.target.value
                     )
                   }
-                  placeholder="e.g. SkillBridge"
+                  placeholder="e.g. SkillShala"
                   className={inputClass}
                 />
               </FormField>

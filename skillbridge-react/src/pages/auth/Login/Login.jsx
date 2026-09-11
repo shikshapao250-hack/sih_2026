@@ -107,7 +107,7 @@ function Login({ onLogin, onNavigate }) {
             </h1>
 
             <p className="mt-6 max-w-md text-sm leading-7 text-slate-300">
-              Continue your SkillBridge journey and
+              Continue your SkillShala journey and
               connect with the right people and
               opportunities.
             </p>
@@ -166,7 +166,7 @@ function Login({ onLogin, onNavigate }) {
 
             <div>
               <p className="text-xs font-black text-indigo-600">
-                SKILLBRIDGE
+                SKILLSHALA
               </p>
 
               <p className="text-xs text-slate-500">
@@ -186,7 +186,7 @@ function Login({ onLogin, onNavigate }) {
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Log in to continue to your SkillBridge
+              Log in to continue to your SkillShala
               account.
             </p>
 
@@ -364,7 +364,7 @@ function Login({ onLogin, onNavigate }) {
             onClick={() => onNavigate("home")}
             className="mt-5 block w-full text-center text-xs font-semibold text-slate-400 transition hover:text-indigo-600"
           >
-            ← Back to SkillBridge
+            ← Back to SkillShala
           </button>
 
         </div>

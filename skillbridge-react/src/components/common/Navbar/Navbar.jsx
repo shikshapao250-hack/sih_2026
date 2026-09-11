@@ -52,7 +52,7 @@ function Navbar({
           </div>
 
           <span className="text-lg font-extrabold tracking-tight text-slate-900">
-            Skill<span className="text-indigo-600">Bridge</span>
+            Skill<span className="text-indigo-600">Shala</span>
           </span>
         </button>
 

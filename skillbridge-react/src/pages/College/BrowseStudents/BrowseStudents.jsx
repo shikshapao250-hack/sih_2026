@@ -105,7 +105,7 @@ function BrowseStudents({ onNavigate }) {
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
             Explore student profiles, skills and projects
-            across the SkillBridge network.
+            across the SkillShala network.
           </p>
 
         </section>

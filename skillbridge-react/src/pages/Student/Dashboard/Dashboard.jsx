@@ -1,4 +1,33 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { watchAuthState } from "../../../services/authService";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+function normalizeSkill(skill) {
+  return {
+    id: skill._id || skill.id,
+    title: skill.skillTitle || skill.title || "",
+    level: skill.skillLevel || "",
+    category: skill.skillCategory || "",
+  };
+}
+
+function normalizeProject(project) {
+  return {
+    id: project._id || project.id,
+    title: project.projectTitle || project.title || "",
+    description: project.projectDescription || project.description || "",
+    technologies: Array.isArray(project.technologies)
+      ? project.technologies
+      : String(project.technologies || "")
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+    status: project.status || "Completed",
+    github: project.githubLink || project.github || "",
+    demo: project.demolink || project.demo || "",
+  };
+}
 
 function Dashboard({
   user,
@@ -12,9 +41,70 @@ function Dashboard({
     );
   }, [user]);
 
-  const skills = user?.skills || [];
-  const projects = user?.projects || [];
+  const [uid, setUid] = useState(user?.uid || "");
+  const [skills, setSkills] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [opportunities, setOpportunities] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const education = user?.education || [];
+
+  useEffect(() => {
+    const unsubscribe = watchAuthState((firebaseUser) => {
+      setUid(firebaseUser?.uid || user?.uid || "");
+    });
+
+    return () => unsubscribe?.();
+  }, [user]);
+
+  useEffect(() => {
+    if (!uid) {
+      setSkills([]);
+      setProjects([]);
+      setOpportunities([]);
+      return;
+    }
+
+    const loadDashboardData = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const [skillsResponse, projectsResponse, jobsResponse] = await Promise.all([
+          fetch(`${API_URL}/skills?uid=${encodeURIComponent(uid)}`),
+          fetch(`${API_URL}/projects?uid=${encodeURIComponent(uid)}`),
+          fetch(`${API_URL}/jobs`),
+        ]);
+
+        if (!skillsResponse.ok) {
+          throw new Error("Failed to load skills");
+        }
+
+        if (!projectsResponse.ok) {
+          throw new Error("Failed to load projects");
+        }
+
+        if (!jobsResponse.ok) {
+          throw new Error("Failed to load opportunities");
+        }
+
+        const skillsData = await skillsResponse.json();
+        const projectsData = await projectsResponse.json();
+        const jobsData = await jobsResponse.json();
+
+        setSkills(Array.isArray(skillsData) ? skillsData.map(normalizeSkill) : []);
+        setProjects(Array.isArray(projectsData) ? projectsData.map(normalizeProject) : []);
+        setOpportunities(Array.isArray(jobsData) ? jobsData : []);
+      } catch (err) {
+        console.error("[dashboard] Failed to load backend data", err);
+        setError(err.message || "Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [uid]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -268,7 +358,7 @@ function Dashboard({
           />
 
           <StatCard
-            number="12"
+            number={opportunities.length}
             label="Recommended"
             icon="🚀"
           />
@@ -317,16 +407,31 @@ function Dashboard({
 
             {skills.length > 0 ? (
 
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
 
                 {skills.map((skill) => (
 
-                  <span
-                    key={skill}
-                    className="rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700"
+                  <div
+                    key={skill.id || skill.title}
+                    className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-4 shadow-sm transition hover:shadow-md"
                   >
-                    {skill}
-                  </span>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-black text-slate-900">
+                        {skill.title}
+                      </span>
+                      <span className="rounded-full bg-indigo-600 px-2 py-1 text-[10px] font-black text-white">
+                        {skill.category || "Skill"}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-500">
+                        {skill.level || "Skill"}
+                      </span>
+                      <span className="text-[11px] font-black text-indigo-600">
+                        ✦
+                      </span>
+                    </div>
+                  </div>
 
                 ))}
 
@@ -469,11 +574,11 @@ function Dashboard({
                   .map((project, index) => (
 
                     <div
-                      key={index}
+                      key={project.id || index}
                       className="rounded-xl border border-slate-100 bg-slate-50 p-4"
                     >
                       <p className="text-sm font-bold text-slate-900">
-                        {project.name ||
+                        {project.title ||
                           `Project ${index + 1}`}
                       </p>
 
@@ -535,27 +640,34 @@ function Dashboard({
             </div>
 
 
-            <div className="mt-5 space-y-3">
-
-              <Opportunity
-                title="Frontend Development Intern"
-                company="Tech Startup"
-                type="Internship"
+            {loading ? (
+              <p className="mt-5 text-xs font-bold text-slate-500">
+                Loading opportunities...
+              </p>
+            ) : error ? (
+              <p className="mt-5 text-xs font-bold text-red-500">
+                {error}
+              </p>
+            ) : opportunities.length > 0 ? (
+              <div className="mt-5 space-y-3">
+                {opportunities.slice(0, 3).map((job, index) => (
+                  <Opportunity
+                    key={job._id || job.id || index}
+                    title={job.title || "Opportunity"}
+                    company={job.organization || "SkillShala"}
+                    type={job.opportunityType || job.type || job.workMode || job.mode || "Opportunity"}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon="🚀"
+                title="No opportunities yet"
+                description="Check back soon for matching opportunities."
+                button="Explore jobs"
+                onClick={() => onNavigate("opportunities")}
               />
-
-              <Opportunity
-                title="React Developer Intern"
-                company="Digital Labs"
-                type="Internship"
-              />
-
-              <Opportunity
-                title="Junior Web Developer"
-                company="Innovation Hub"
-                type="Job"
-              />
-
-            </div>
+            )}
 
           </section>
 

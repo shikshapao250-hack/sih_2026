@@ -329,7 +329,7 @@ function CollegeDashboard({
                 </h2>
 
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                  SkillBridge will help colleges understand
+                  SkillShala will help colleges understand
                   which technical and professional skills
                   are strong, missing or increasingly
                   demanded by organizations.

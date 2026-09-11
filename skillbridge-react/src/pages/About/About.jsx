@@ -17,7 +17,7 @@ function About({ onNavigate }) {
           <div className="max-w-3xl">
 
             <span className="inline-flex rounded-full border border-indigo-400/20 bg-indigo-500/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-indigo-300">
-              About SkillBridge
+              About SkillShala
             </span>
 
             <h1 className="mt-6 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
@@ -28,7 +28,7 @@ function About({ onNavigate }) {
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-              SkillBridge is a career ecosystem designed to
+              SkillShala is a career ecosystem designed to
               connect students, organizations and colleges
               through skills, projects, education and
               meaningful opportunities.
@@ -49,7 +49,7 @@ function About({ onNavigate }) {
                 onClick={() => onNavigate("discover")}
                 className="rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-black text-white transition hover:bg-white/10"
               >
-                Explore SkillBridge
+                Explore SkillShala
               </button>
 
             </div>
@@ -72,7 +72,7 @@ function About({ onNavigate }) {
           <div>
 
             <p className="text-xs font-black uppercase tracking-widest text-indigo-600">
-              Why SkillBridge?
+              Why SkillShala?
             </p>
 
             <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
@@ -88,7 +88,7 @@ function About({ onNavigate }) {
             </p>
 
             <p className="mt-4 text-sm leading-7 text-slate-500 sm:text-base">
-              SkillBridge brings these three sides together
+              SkillShala brings these three sides together
               in one platform.
             </p>
 
@@ -220,7 +220,7 @@ function About({ onNavigate }) {
           </h2>
 
           <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-indigo-100 sm:text-base">
-            Create your SkillBridge profile and start
+            Create your SkillShala profile and start
             connecting skills with opportunities.
           </p>
 

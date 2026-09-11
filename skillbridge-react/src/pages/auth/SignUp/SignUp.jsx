@@ -148,7 +148,7 @@ function SignUp({ onLogin, onNavigate }) {
             </div>
 
             <p className="mt-10 text-sm font-bold text-indigo-300">
-              WELCOME TO SKILLBRIDGE
+              WELCOME TO SKILLSHALA
             </p>
 
             <h2 className="mt-4 text-4xl font-black leading-tight xl:text-5xl">
@@ -160,7 +160,7 @@ function SignUp({ onLogin, onNavigate }) {
             </h2>
 
             <p className="mt-6 max-w-md leading-7 text-slate-300">
-              SkillBridge brings students, organizations
+              SkillShala brings students, organizations
               and colleges together in one professional
               ecosystem.
             </p>
@@ -216,7 +216,7 @@ function SignUp({ onLogin, onNavigate }) {
 
               <div>
                 <p className="text-xs font-bold text-indigo-600">
-                  SKILLBRIDGE
+                  SKILLSHALA
                 </p>
 
                 <p className="text-xs font-medium text-slate-500">
@@ -442,7 +442,7 @@ function SignUp({ onLogin, onNavigate }) {
               />
 
               <span className="text-xs leading-5 text-slate-500">
-                I agree to SkillBridge's terms and understand
+                I agree to SkillShala's terms and understand
                 that my profile information may be visible to
                 relevant users on the platform.
               </span>

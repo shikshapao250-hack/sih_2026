@@ -3,7 +3,7 @@ import { useState } from "react";
 const initialEducation = [
   {
     id: 1,
-    institution: "SkillBridge University",
+    institution: "SkillShala University",
     degree: "B.Tech — Computer Science",
     year: "2024 - 2028",
     score: "8.4 CGPA",

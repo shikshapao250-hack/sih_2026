@@ -113,7 +113,7 @@ function Discover({ onNavigate }) {
           <div className="max-w-3xl">
 
             <span className="inline-flex rounded-full border border-indigo-400/20 bg-indigo-500/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-indigo-300">
-              Discover SkillBridge
+              Discover SkillShala
             </span>
 
             <h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
@@ -125,7 +125,7 @@ function Discover({ onNavigate }) {
 
             <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
               Explore students, organizations and colleges
-              across the SkillBridge ecosystem.
+              across the SkillShala ecosystem.
             </p>
 
           </div>
@@ -388,7 +388,7 @@ function Discover({ onNavigate }) {
             <div className="rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-600 p-6 text-white shadow-xl shadow-indigo-100">
 
               <p className="text-xs font-black uppercase tracking-widest text-indigo-200">
-                Join SkillBridge
+                Join SkillShala
               </p>
 
               <h3 className="mt-3 text-xl font-black">
@@ -418,7 +418,7 @@ function Discover({ onNavigate }) {
             <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
 
               <p className="text-xs font-black uppercase tracking-widest text-indigo-600">
-                SkillBridge network
+                SkillShala network
               </p>
 
               <div className="mt-5 space-y-4">

@@ -210,7 +210,7 @@ function OrganizationDashboard({
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
               Build your talent pipeline, publish
               opportunities and discover skilled students
-              through SkillBridge.
+              through SkillShala.
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">

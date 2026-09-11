@@ -335,7 +335,7 @@ function Resume({ onNavigate }) {
                 Uploading a resume is optional. You should
                 only share information that you are
                 comfortable making available through your
-                SkillBridge profile.
+                SkillShala profile.
               </p>
 
             </div>
@@ -360,7 +360,7 @@ function Resume({ onNavigate }) {
           </h2>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-indigo-100">
-            SkillBridge can use your profile, skills,
+            SkillShala can use your profile, skills,
             projects and education to surface relevant
             internships and jobs.
           </p>

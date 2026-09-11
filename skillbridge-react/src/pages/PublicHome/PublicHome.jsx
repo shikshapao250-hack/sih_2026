@@ -11,7 +11,7 @@ function PublicHome({
       <section className="public-home__hero">
         <div className="public-home__hero-content">
           <span className="public-home__badge">
-            SKILLBRIDGE • CAREER ECOSYSTEM
+            SKILLSHALA • CAREER ECOSYSTEM
           </span>
 
           <h1>
@@ -20,7 +20,7 @@ function PublicHome({
           </h1>
 
           <p>
-            SkillBridge connects students, colleges and
+            SkillShala connects students, colleges and
             organizations through skills, opportunities,
             career insights and intelligent skill-gap analysis.
           </p>

@@ -365,7 +365,7 @@ function Opportunities({ onNavigate }) {
                         <div>
 
                           <p className="text-[10px] font-black uppercase tracking-wider text-indigo-500">
-                            SkillBridge match
+                            SkillShala match
                           </p>
 
                           <p className="mt-1 text-xs font-bold text-indigo-900">
@@ -571,7 +571,7 @@ function Opportunities({ onNavigate }) {
               </p>
 
               <p className="mt-3 text-sm font-bold leading-6">
-                A complete profile helps SkillBridge find
+                A complete profile helps SkillShala find
                 better opportunities for you.
               </p>
 

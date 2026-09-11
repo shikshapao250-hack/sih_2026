@@ -34,11 +34,11 @@ function RoleSelection({ onNavigate }) {
         <div className="mx-auto max-w-2xl text-center">
 
           <span className="inline-flex rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700 sm:text-sm">
-            JOIN SKILLBRIDGE
+            JOIN SKILLSHALA
           </span>
 
           <h1 className="mt-5 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
-            How will you use SkillBridge?
+            How will you use SkillShala?
           </h1>
 
           <p className="mt-4 text-sm leading-6 text-slate-500 sm:text-base sm:leading-7">

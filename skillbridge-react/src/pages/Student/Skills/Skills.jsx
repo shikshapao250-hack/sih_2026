@@ -262,7 +262,7 @@ function Skills({ onNavigate }) {
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-indigo-100 sm:text-base">
             Add the skills you know and keep your
-            profile updated. SkillBridge can use this
+            profile updated. SkillShala can use this
             information to discover relevant opportunities.
           </p>
 

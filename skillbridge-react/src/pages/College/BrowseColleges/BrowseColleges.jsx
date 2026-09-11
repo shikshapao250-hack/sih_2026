@@ -137,7 +137,7 @@ function BrowseColleges({ onNavigate }) {
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
             Discover institutions, academic programs,
             student communities and areas of expertise
-            across the SkillBridge network.
+            across the SkillShala network.
           </p>
 
 
